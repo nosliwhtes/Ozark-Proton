@@ -1,0 +1,54 @@
+name: Validate
+
+# Fast, dependency-free checks on every PR so workflow and patch-script
+# regressions are caught before merge. The full build stays manual/dispatch.
+on:
+  pull_request:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/**'
+      - 'patches/protonprep-valve-staging.sh'
+      - 'configure.sh'
+
+jobs:
+  validate:
+    name: Validate workflows and scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: YAML syntax check (all workflows)
+        shell: bash
+        run: |
+          python3 -c "
+          import glob, sys, yaml
+          bad = 0
+          for f in sorted(glob.glob('.github/workflows/*.yml')):
+              try:
+                  yaml.safe_load(open(f))
+                  print(f'OK   {f}')
+              except yaml.YAMLError as e:
+                  bad = 1
+                  print(f'FAIL {f}: {e}')
+          sys.exit(bad)
+          "
+
+      - name: Shell syntax check (build scripts)
+        shell: bash
+        run: |
+          bash -n configure.sh
+          bash -n patches/protonprep-valve-staging.sh
+          echo "shell syntax OK"
+
+      - name: Guard — patch step must fail fast
+        shell: bash
+        run: |
+          # The CI Patch step must never swallow patch failures with '|| true'.
+          # (A broken patch tree going green wastes hours of runner time.)
+          if grep -n 'protonprep-valve-staging.sh || true' .github/workflows/_job_build.yml; then
+            echo "ERROR: patch step swallows failures (|| true). Remove it so CI fails fast."
+            exit 1
+          fi
+          echo "fail-fast guard OK"
