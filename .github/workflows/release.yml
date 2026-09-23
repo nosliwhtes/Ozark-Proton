@@ -9,7 +9,8 @@ on:
 
 concurrency:
   group: ${{ github.ref_name }}
-  cancel-in-progress: true
+  # never cancel a live release mid-upload; a re-pushed tag waits its turn
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -31,7 +32,8 @@ jobs:
       shell: bash
       run: |
         git fetch origin +refs/tags/*:refs/tags/*
-       - name: Create Release
+
+    - name: Create Release
       id: create
       shell: bash
       run: |

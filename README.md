@@ -1,14 +1,17 @@
+# Ozark Proton
+
 > [!Caution]
->  **Myself (GloriousEggroll) and this project (GE-Proton) are not affiliated with any other websites related to GE-Proton. There is no existing website for GE-Proton other than this GitHub repository.**
+> **Ozark Proton is an experimental fork of GE-Proton. It is not an official GE-Proton build and is not supported by Valve or GloriousEggroll.** The sections below are retained from the [upstream GE-Proton README](https://github.com/GloriousEggroll/proton-ge-custom/blob/master/README.md), including its maintainer's first-person statements, support guidance, feature claims, build instructions, and game list. They apply to the upstream project and do not certify Ozark.
 
-> [!Important]
-> **If you have an issue that happens with my GE-Proton build, provided from this repository, that does not happen on Valve's Proton, please do not open a bug report on Valve's bug tracker.**
->
-> Instead, open an issue on this repository's issue tracker: https://github.com/GloriousEggroll/proton-ge-custom/issues
->
-> or contact me on Discord about the issue: https://discord.gg/6y3BdzC
+## Current Ozark build
 
-# GE-Proton
+The current local package is named **`Ozark-Proton11-7`**. It was built on 2026-09-22 from the `wave4-rtx-bumps` worktree at commit `d50fbd7`, with DXVK `25ca63f` and VKD3D-Proton `7f0c30a`. The build worktree also contained uncommitted changes to Wine, lsteamclient, OpenXR, Steam/umu helpers, and supporting files, so the commit alone cannot reproduce this package. Capture and review those changes before treating the build as reproducible or publishing it as a release.
+
+The package checksum was verified and it is installed in the local Steam `compatibilitytools.d` directory. Its appearance in Steam's compatibility picker has not been verified; restart Steam to refresh the tool list. No game-compatibility or performance testing is claimed. The build archive is local and is not published as a GitHub release.
+
+## Upstream GE-Proton documentation
+
+The sections below are retained from the GE-Proton README. Unless a section explicitly says otherwise, they describe the upstream project and should not be read as a claim that Ozark has identical behavior or has passed the same tests.
 
 > [!Warning]
 > **Running non-Steam games with GE-Proton outside of Steam is only supported using [umu](https://github.com/Open-Wine-Components/umu-launcher):**
@@ -30,6 +33,8 @@
 
 ## Table of contents
 
+- [Current Ozark build](#current-ozark-build)
+- [Upstream GE-Proton documentation](#upstream-ge-proton-documentation)
 - [Overview](#overview)
 	- [Notes](#notes)
 - [Installation](#installation)
@@ -56,9 +61,9 @@
 
 ## Overview
 
-This is my build of Proton with the most recent bleeding-edge Proton Experimental Wine.
+The overview and feature list below describe upstream GE-Proton. They are not a verified inventory of the current Ozark package.
 
-Things it contains that Valve's Proton currently does not:
+The upstream GE-Proton README describes the following differences from Valve's Proton:
 
 - Additional media foundation patches for better video playback support
 - AMD FSR patches added directly to fullscreen hack that can be toggled with WINE_FULLSCREEN_FSR=1
@@ -655,6 +660,8 @@ https://www.patreon.com/gloriouseggroll
 
 
 ## Tested games
+
+> The table below is inherited from upstream GE-Proton and is not a test record for Ozark Proton.
 
 | Name                                                | SteamDB link                                 | ProtonDB link                               | Steambase                                   | Has protonfixes    | Has Media Foundation fixes |
 | --------------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | ------------------ | -------------------------- |
