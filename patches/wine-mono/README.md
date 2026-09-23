@@ -24,7 +24,9 @@ below addresses a later failure. The layer/graphics work is unrelated.
   local patches authored by GloriousEggroll. No ReactOS source is used.
 
 The first prep downloads the approximately 307 MB source archive to
-`contrib/`. Cached archives are reused without checksum verification.
+`contrib/`. Every prep checks the archive's sha256 against the pinned
+`WINEMONO_SHA256` in `source.conf`, including cache hits, and removes and
+fails on a mismatch.
 Every prep removes the generated `wine-mono/` source tree, re-extracts
 the pristine source including pinned
 submodules, and applies `patches/wine-mono/*.patch` in filename order.
