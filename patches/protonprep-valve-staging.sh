@@ -270,14 +270,16 @@ apply_all_in_dir() {
     apply_patch "../patches/game-patches/layered-overlay-wine.patch"
 
     # multi-process-launcher-x11-fallback.patch is intentionally disabled.
+    # Kept at patches/wine-hotfixes/disabled/multi-process-launcher-x11-fallback.patch.
     # Wine-Wayland now renders cross-process launcher windows directly.
 
     echo "WINE: -GAME FIXES- add fixes Guilty Gear Accent Core Plus R intro video (win32u related)"
     apply_patch "../patches/game-patches/0001-win32u-Avoid-zero-WM_ACTIVATEAPP-lparam-on-first-for.patch"
 
+    # Wine-side companion to the DXVK patch of the same purpose. Different file; both required.
     # https://github.com/GloriousEggroll/proton-ge-custom/issues/721
     echo "WINE: -GAME FIXES- keep Black Desert fullscreen on focus loss"
-    apply_patch "../patches/game-patches/black-desert-keep-fullscreen-on-focus-loss.patch"
+    apply_patch "../patches/game-patches/black-desert-wine-keep-fullscreen-on-focus-loss.patch"
 
     echo "WINE: -GAME FIXES- make MapleStory launch: avoid NULL deref in CharPrevA/CharPrevExA"
     apply_patch "../patches/game-patches/maplestory-kernelbase-charprev-null.patch"
