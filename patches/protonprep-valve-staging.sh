@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Stop immediately if a patch or other preparation command fails.
+set -e
+
 # patch functions
 apply_patch() {
     local patch_path="$1"
