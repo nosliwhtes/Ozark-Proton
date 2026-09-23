@@ -23,6 +23,13 @@ if [[ ! -f "$archive" ]]; then
     trap - EXIT
 fi
 
+actual_sha256="$(sha256sum -- "$archive" | cut -d ' ' -f1)"
+if [[ "$actual_sha256" != "$WINEMONO_SHA256" ]]; then
+    rm -f -- "$archive"
+    echo "WINE-MONO: sha256 mismatch for $archive (expected $WINEMONO_SHA256, got $actual_sha256); removed corrupt cache" >&2
+    exit 1
+fi
+
 # The release archive includes the pinned submodules. Re-extraction resets
 # patched files and removes generated/untracked files without needing Git.
 echo "WINE-MONO: reset source to ${WINEMONO_VER} and clean generated files"
