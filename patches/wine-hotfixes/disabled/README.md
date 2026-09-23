@@ -37,14 +37,6 @@ Full import snapshot, attribution, and validation notes:
 
 ## Unapplied quarantine
 
-- `pipewire-0001-alsa-pcm-support-aux-channel-map.patch`:
-  moved from `patches/pipewire/`. No reference in protonprep, the Makefile,
-  or workflows, so it is never applied. Do not restore without a protonprep
-  reference.
-- `discordrpc-0001-remove-darwin-syscall.patch`:
-  moved from `patches/discordrpc/`. Protonprep only runs apply_all_in_dir on
-  `patches/discordrpc/helpers`, so this root patch is never applied. Do not
-  restore without a protonprep reference.
 - `multi-process-launcher-x11-fallback.patch`:
   moved from `patches/game-patches/`. Protonprep already states it is
   intentionally disabled because Wine-Wayland renders cross-process launcher
