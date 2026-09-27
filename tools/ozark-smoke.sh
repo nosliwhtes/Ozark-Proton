@@ -32,6 +32,18 @@ pgrep -x steam >/dev/null || { echo "Steam is not running." >&2; exit 2; }
 
 in_list() { local x="$1"; shift; for y in "$@"; do [[ "$x" == "$y" ]] && return 0; done; return 1; }
 name_of() { grep -Po '"name"\s+"\K[^"]+' "$APPS/appmanifest_$1.acf" 2>/dev/null || echo "?"; }
+# Proton build Steam has mapped for an appid (per-game mapping, else the global "0" default).
+tool_of() {
+  python3 - "$1" "$STEAM/config/config.vdf" <<'PY' 2>/dev/null || echo "?"
+import re, sys
+appid, path = sys.argv[1], sys.argv[2]
+txt = open(path, encoding="utf-8", errors="replace").read()
+m = re.search(r'"CompatToolMapping"\s*\{(.*?)\n\t{4}\}', txt, re.S)
+blk = m.group(1) if m else ""
+maps = dict(re.findall(r'"(\d+)"\s*\{\s*"name"\s*"([^"]*)"', blk))
+print(maps.get(appid) or maps.get("0") or "?")
+PY
+}
 
 if (($#)); then
   IDS=("$@")
@@ -85,14 +97,15 @@ for id in "${IDS[@]}"; do
   for _ in $(seq 1 "$WAIT"); do game_pids "$id" >/dev/null || { alive=0; break; }; sleep 1; done
   stop_game "$id"
 
-  proton="?"; notes=()
+  proton=$(tool_of "$id"); notes=()
   if [[ -f "$log" ]]; then
-    proton=$(grep -m1 -Po '^Proton: \K\S+' "$log" || echo "?")
+    logged=$(grep -m1 -Po '^Proton: \K\S+' "$log") && proton="$logged"
     grep -qE 'Unhandled (exception|page fault)|wine: Unhandled|err:seh:.*unhandled' "$log" && notes+=("unhandled exception")
     grep -qE 'VK_ERROR_DEVICE_LOST|DXGI_ERROR_DEVICE_(REMOVED|HUNG)' "$log" && notes+=("GPU device lost")
     grep -qE 'err:module:import_dll' "$log" && notes+=("missing DLL")
   else
-    notes+=("no Proton log (native/non-Proton launch?)")
+    # Logging comes from Ozark's user_settings.py test mode; other builds write no log.
+    notes+=("no log (build has no Ozark test mode); liveness only")
   fi
   ((alive == 0)) && notes+=("exited before ${WAIT}s")
 
