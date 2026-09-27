@@ -3,6 +3,15 @@
 > [!Caution]
 > **Ozark Proton is an experimental fork of GE-Proton. It is not an official GE-Proton build and is not supported by Valve or GloriousEggroll.** The sections below are retained from the [upstream GE-Proton README](https://github.com/GloriousEggroll/proton-ge-custom/blob/master/README.md), including its maintainer's first-person statements, support guidance, feature claims, build instructions, and game list. They apply to the upstream project and do not certify Ozark.
 
+## Ozark release pipeline
+
+- **Releases:** pushing a tag named `Ozark-Proton<major>-<minor>-<rev>` (for example `Ozark-Proton11-7-1`) builds the tarball in CI and attaches it to a GitHub release.
+- **Upstream sync:** `.github/workflows/upstream-sync.yml` merges GE's master every Monday. If it merges cleanly it opens a PR; if there's a conflict the run fails, so it shows in Actions.
+- **Smoke test:** `tools/ozark-smoke.sh [appid...]` launches each game through Steam and runs it for `WAIT` seconds (default 90). It then scans the Proton log and writes `~/ozark-logs/smoke-<timestamp>.md`. Anti-cheat titles are skipped (see [ANTICHEAT.md](ANTICHEAT.md)).
+- **Shipped defaults:** `user_settings.py` turns on NVAPI and a persistent 10 GB NVIDIA shader cache. Logging stays off unless you set `OZARK_TEST=1` or `~/.config/ozark/test-mode` exists.
+- **Per-game fixes:** `gamefixes/<appid>.py` files are copied over the upstream protonfixes at build time.
+- **Fallback:** keep stock GE-Proton installed. Pin any game that regresses on Ozark back to GE under Properties → Compatibility.
+
 ## Current Ozark build
 
 The current local package is named **`Ozark-Proton11-7`**. It was built on 2026-09-22 from the `wave4-rtx-bumps` worktree at commit `d50fbd7`, with DXVK `25ca63f` and VKD3D-Proton `7f0c30a`. The build worktree also contained uncommitted changes to Wine, lsteamclient, OpenXR, Steam/umu helpers, and supporting files, so the commit alone cannot reproduce this package. Capture and review those changes before treating the build as reproducible or publishing it as a release.
