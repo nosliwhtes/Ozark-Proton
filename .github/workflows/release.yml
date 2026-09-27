@@ -5,6 +5,7 @@ on:
     types: [ published ]
   push:
     tags:
+      - 'Ozark-Proton*-*'
       - 'GE-Proton*-*'
 
 concurrency:
