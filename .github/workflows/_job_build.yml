@@ -13,14 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cleanup disk space
-        uses: endersonmenezes/free-disk-space@v3
+        uses: endersonmenezes/free-disk-space@v4
         with:
           remove_android: true
           remove_dotnet: true
           remove_haskell: true
           remove_tool_cache: true
-          remove_codeql: true
-          remove_docker_images: true
           remove_swap: true
           remove_packages: |
             azure-cli google-cloud-cli google-chrome-stable firefox microsoft-edge-stable
@@ -36,7 +34,7 @@ jobs:
 
       - name: Restore cache
         id: ccache-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ~/.ccache
           key: ccache-proton-${{ github.run_id }}
@@ -62,7 +60,7 @@ jobs:
 
       - name: Upload patchlog.txt
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: patchlog.txt
           path: patchlog.txt
@@ -80,19 +78,19 @@ jobs:
       - name: Save cache
         id: ccache-save
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ~/.ccache
           key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
 
       - name: Upload artifact ${{ inputs.name }}.tar.gz
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.name }}.tar.gz
           path: ./build/${{ inputs.name }}.tar.gz
 
       - name: Upload artifact ${{ inputs.name }}.sha512sum
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.name }}.sha512sum
           path: ./build/${{ inputs.name }}.sha512sum
