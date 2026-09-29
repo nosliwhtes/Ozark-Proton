@@ -1,26 +1,51 @@
 # Ozark Proton
 
 > [!Caution]
-> **Ozark Proton is an experimental fork of GE-Proton. It is not an official GE-Proton build and is not supported by Valve or GloriousEggroll.** The sections below are retained from the [upstream GE-Proton README](https://github.com/GloriousEggroll/proton-ge-custom/blob/master/README.md), including its maintainer's first-person statements, support guidance, feature claims, build instructions, and game list. They apply to the upstream project and do not certify Ozark.
+> **Ozark Proton is an unofficial, experimental fork of GE-Proton.** Valve and GloriousEggroll don't make it or support it, so please don't send Ozark problems to them.
+>
+> Most of this README is copied from the upstream GE-Proton README. Those parts describe GE-Proton, and some are written in its maintainer's voice ("I", "my build"). They don't mean Ozark has been tested the same way.
 
-## Ozark release pipeline
+## What Ozark is
 
-- **Releases:** pushing a tag named `Ozark-Proton<major>-<minor>-<rev>` (for example `Ozark-Proton11-7-1`) builds the tarball in CI and attaches it to a GitHub release.
-- **Upstream sync:** `.github/workflows/upstream-sync.yml` merges GE's master every Monday. If it merges cleanly it opens a PR; if there's a conflict the run fails, so it shows in Actions.
-- **Smoke test:** `tools/ozark-smoke.sh [appid...]` launches each game through Steam and runs it for `WAIT` seconds (default 90). It then scans the Proton log and writes `~/ozark-logs/smoke-<timestamp>.md`. Anti-cheat titles are skipped (see [ANTICHEAT.md](ANTICHEAT.md)).
-- **Shipped defaults:** `user_settings.py` turns on NVAPI and a persistent 10 GB NVIDIA shader cache. Logging stays off unless you set `OZARK_TEST=1` or `~/.config/ozark/test-mode` exists.
-- **Per-game fixes:** `gamefixes/<appid>.py` files are copied over the upstream protonfixes at build time.
-- **Fallback:** keep stock GE-Proton installed. Pin any game that regresses on Ozark back to GE under Properties → Compatibility.
+Ozark is GE-Proton with a small set of extra changes, tuned for an NVIDIA RTX 5080 on Linux:
 
-## Current Ozark build
+- **Newer graphics layers.** DXVK `25ca63f` and VKD3D-Proton `7f0c30a`, newer than the versions in GE-Proton11-7.
+- **NVIDIA-friendly defaults.** NVAPI stays on (for DLSS and Reflex). The NVIDIA shader cache limit goes up to 10 GB, and the driver no longer deletes old entries. Games that have already built their shaders stutter less the next time you play.
+- **A few Ozark game fixes.** They live in `gamefixes/`. Right now there is one: Cult of the Lamb loads a `winhttp.dll` from the game folder first, so BepInEx mods work.
+- **Release tooling.** Tagged builds and a weekly check for GE updates.
 
-The current local package is named **`Ozark-Proton11-7`**. It was built on 2026-09-22 from the `wave4-rtx-bumps` worktree at commit `d50fbd7`, with DXVK `25ca63f` and VKD3D-Proton `7f0c30a`. The build worktree also contained uncommitted changes to Wine, lsteamclient, OpenXR, Steam/umu helpers, and supporting files, so the commit alone cannot reproduce this package. Capture and review those changes before treating the build as reproducible or publishing it as a release.
+Nobody has tested Ozark's game compatibility or performance yet. Treat it as a test build and keep stock GE-Proton installed next to it.
 
-The package checksum was verified and it is installed in the local Steam `compatibilitytools.d` directory. Its appearance in Steam's compatibility picker has not been verified; restart Steam to refresh the tool list. No game-compatibility or performance testing is claimed. The build archive is local and is not published as a GitHub release.
+## Installing
+
+1. Download `Ozark-Proton<version>.tar.gz` and `Ozark-Proton<version>.sha512sum` from [Releases](https://github.com/nosliwhtes/Ozark-Proton/releases).
+2. Check the download: `sha512sum -c Ozark-Proton<version>.sha512sum`
+3. Extract it into Steam's compatibility tools folder:
+   - Regular Steam: `~/.steam/steam/compatibilitytools.d/`
+   - Flatpak Steam: `~/.var/app/com.valvesoftware.Steam/data/Steam/compatibilitytools.d/`
+4. Restart Steam. Then pick Ozark for a game under **Properties → Compatibility**.
+
+If a game runs worse on Ozark, switch that game back to GE-Proton in the same menu.
+
+## Settings
+
+Ozark's defaults are in `user_settings.py`. Anything you set in a game's launch options overrides them.
+
+To capture logs for one game, add `OZARK_TEST=1 %command%` to its launch options. Logs go to `~/ozark-logs/steam-<appid>.log`. Logging stays off otherwise.
+
+Games with anti-cheat work or don't work because of the anti-cheat, not because of Proton. See [ANTICHEAT.md](ANTICHEAT.md).
+
+## For maintainers
+
+- **Releasing.** Push an annotated tag named `Ozark-Proton<major>-<minor>-<rev>` (for example `Ozark-Proton11-7-6`). GitHub Actions builds it, creates the release, and attaches the tarball and checksum. The tag's message becomes the release notes, so write it for players.
+- **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync` branch. When the merge is clean, it opens a pull request. When there's a conflict, the run fails, and the failure shows up in Actions.
+- **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML and build-script syntax. It also makes sure a failed patch stops the build.
+- **Smoke test.** `tools/ozark-smoke.sh [appid...]` starts each game through Steam and lets it run for 90 seconds (set `WAIT` to change that). Then it closes the game, scans the log, and writes a report to `~/ozark-logs/`. It really launches your games, so run it only when you mean to. Anti-cheat games are skipped.
+- **Game fixes.** At build time, `gamefixes/<appid>.py` files are copied over GE's protonfixes. A file with the same app ID replaces GE's.
 
 ## Upstream GE-Proton documentation
 
-The sections below are retained from the GE-Proton README. Unless a section explicitly says otherwise, they describe the upstream project and should not be read as a claim that Ozark has identical behavior or has passed the same tests.
+Everything below comes from the GE-Proton README. Unless a section says otherwise, it describes GE-Proton, not Ozark.
 
 > [!Warning]
 > **Running non-Steam games with GE-Proton outside of Steam is only supported using [umu](https://github.com/Open-Wine-Components/umu-launcher):**
@@ -42,7 +67,10 @@ The sections below are retained from the GE-Proton README. Unless a section expl
 
 ## Table of contents
 
-- [Current Ozark build](#current-ozark-build)
+- [What Ozark is](#what-ozark-is)
+- [Installing](#installing)
+- [Settings](#settings)
+- [For maintainers](#for-maintainers)
 - [Upstream GE-Proton documentation](#upstream-ge-proton-documentation)
 - [Overview](#overview)
 	- [Notes](#notes)
@@ -70,9 +98,9 @@ The sections below are retained from the GE-Proton README. Unless a section expl
 
 ## Overview
 
-The overview and feature list below describe upstream GE-Proton. They are not a verified inventory of the current Ozark package.
+The overview and feature list below describe GE-Proton. They are not a checked list of what Ozark contains.
 
-The upstream GE-Proton README describes the following differences from Valve's Proton:
+GE-Proton lists these differences from Valve's Proton:
 
 - Additional media foundation patches for better video playback support
 - AMD FSR patches added directly to fullscreen hack that can be toggled with WINE_FULLSCREEN_FSR=1
@@ -670,7 +698,7 @@ https://www.patreon.com/gloriouseggroll
 
 ## Tested games
 
-> The table below is inherited from upstream GE-Proton and is not a test record for Ozark Proton.
+> This table comes from GE-Proton. It is not a record of Ozark testing.
 
 | Name                                                | SteamDB link                                 | ProtonDB link                               | Steambase                                   | Has protonfixes    | Has Media Foundation fixes |
 | --------------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | ------------------ | -------------------------- |

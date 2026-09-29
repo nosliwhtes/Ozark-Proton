@@ -46,7 +46,7 @@ jobs:
           # Preserve the tag annotation explicitly; gh rejects --notes-from-tag together with --repo.
           gh release create "${{ github.ref_name }}" \
             --latest \
-            --title "${{ github.ref_name }} Released" \
+            --title "${{ github.ref_name }}" \
             --notes "$(git tag --list "$GITHUB_REF_NAME" --format='%(contents)')" \
             --verify-tag \
             --repo "${{ github.server_url }}/${{ github.repository }}"

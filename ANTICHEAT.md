@@ -8,7 +8,7 @@ build can fix that: not Ozark, not GE, not Valve's.
 
 Status from [AreWeAntiCheatYet](https://areweanticheatyet.com), checked 2026-09-26.
 
-| AppID | Game | Anti-cheat | AWACY status | In smoke test |
+| AppID | Game | Anti-cheat | AreWeAntiCheatYet status | In smoke test |
 |---|---|---|---|---|
 | 553850 | HELLDIVERS 2 | nProtect GameGuard | Running | Skipped |
 | 2479810 | Gray Zone Warfare | Easy Anti-Cheat + AnyBrain | Running | Skipped |
