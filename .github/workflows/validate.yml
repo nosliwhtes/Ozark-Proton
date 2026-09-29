@@ -1,7 +1,8 @@
 name: Validate
 
-# Fast, dependency-free checks on every PR so workflow and patch-script
-# regressions are caught before merge. The full build stays manual/dispatch.
+# Quick checks on every pull request. They catch broken workflow files and
+# patch-script mistakes before merge, without doing a full build.
+# Full builds run only when a release tag is pushed (see release.yml).
 on:
   pull_request:
   push:

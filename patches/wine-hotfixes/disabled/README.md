@@ -35,9 +35,10 @@ restore them just to fill numbering gaps in an active series.
 Full import snapshot, attribution, and validation notes:
 `../wine-wayland/README.md`.
 
-## Unapplied quarantine
+## Moved here by Ozark
 
-- `multi-process-launcher-x11-fallback.patch`:
-  moved from `patches/game-patches/`. Protonprep already states it is
-  intentionally disabled because Wine-Wayland renders cross-process launcher
-  windows directly. Do not restore without a protonprep reference.
+- `multi-process-launcher-x11-fallback.patch`: moved from
+  `patches/game-patches/` because nothing applies it. GE's protonprep script
+  already marks it as turned off, since Wine-Wayland now draws launcher
+  windows from other processes itself. Only bring it back if protonprep is
+  changed to apply it.
