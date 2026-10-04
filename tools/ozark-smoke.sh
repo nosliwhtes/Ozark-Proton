@@ -40,7 +40,11 @@ REPORT="$LOGDIR/smoke-$(date +%Y%m%d-%H%M%S).md"
 FLAG_PREEXISTING=0
 [[ -e "$FLAG" ]] && FLAG_PREEXISTING=1
 cleanup() { ((FLAG_PREEXISTING)) || rm -f "$FLAG"; }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+# INT and TERM have to leave, not just clean up: under one shared trap bash
+# runs cleanup and then resumes the script, so Ctrl-C never stopped a run.
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
 
 pgrep -x steam >/dev/null || { echo "Steam is not running." >&2; exit 2; }
 
