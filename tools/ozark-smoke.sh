@@ -97,8 +97,9 @@ for id in "${IDS[@]}"; do
   for _ in $(seq 1 "$WAIT"); do game_pids "$id" >/dev/null || { alive=0; break; }; sleep 1; done
   stop_game "$id"
 
-  proton=$(tool_of "$id"); notes=()
+  proton=$(tool_of "$id"); notes=(); log_ok=0
   if [[ -f "$log" ]]; then
+    log_ok=1
     logged=$(grep -m1 -Po '^Proton: \K\S+' "$log") && proton="$logged"
     grep -qE 'Unhandled (exception|page fault)|wine: Unhandled|err:seh:.*unhandled' "$log" && notes+=("unhandled exception")
     grep -qE 'VK_ERROR_DEVICE_LOST|DXGI_ERROR_DEVICE_(REMOVED|HUNG)' "$log" && notes+=("GPU device lost")
@@ -109,7 +110,7 @@ for id in "${IDS[@]}"; do
   fi
   ((alive == 0)) && notes+=("exited before ${WAIT}s")
 
-  if ((alive == 1)) && ! printf '%s\n' "${notes[@]}" | grep -qE 'unhandled|device lost'; then
+  if ((alive == 1)) && ((log_ok == 1)) && ! printf '%s\n' "${notes[@]}" | grep -qE 'unhandled|device lost'; then
     res=PASS; pass=$((pass+1))
   else
     res=FAIL; fail=$((fail+1))
