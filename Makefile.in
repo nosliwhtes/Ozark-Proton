@@ -1761,14 +1761,17 @@ $(OBJ)/.protonfixes-aarch64-build:
 
 PROTONFIXES_TARGET := $(addprefix $(DST_BASE)/,protonfixes)
 
-$(OBJ)/.protonfixes-x86_64-dist:
+# The dist stamps depend on the local gamefixes: without this, editing a
+# gamefix never re-runs the copy on incremental builds and the dist keeps
+# shipping the old fix.
+$(OBJ)/.protonfixes-x86_64-dist: $(wildcard $(SRCDIR)/gamefixes/*.py)
 	mkdir -p $(PROTONFIXES_TARGET)
 	rsync --delete -arx $(PROTONFIXES_x86_64_DST)/ $(PROTONFIXES_TARGET)
 	# Ozark per-game fixes overlay upstream ones (same appid file wins)
 	cp -a $(SRCDIR)/gamefixes/*.py $(PROTONFIXES_TARGET)/gamefixes-steam/
 	touch $@
 
-$(OBJ)/.protonfixes-aarch64-dist:
+$(OBJ)/.protonfixes-aarch64-dist: $(wildcard $(SRCDIR)/gamefixes/*.py)
 	mkdir -p $(PROTONFIXES_TARGET)
 	rsync --delete -arx $(PROTONFIXES_aarch64_DST)/ $(PROTONFIXES_TARGET)
 	cp -a $(SRCDIR)/gamefixes/*.py $(PROTONFIXES_TARGET)/gamefixes-steam/

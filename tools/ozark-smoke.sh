@@ -22,16 +22,34 @@ SKIP=(553850 2479810 1144200)
 # Steam runtimes / Proton builds / redistributables are not games.
 NOT_GAMES=(228980 1070560 1391110 1628350 4183110 1493710 2180100 4628710)
 
+# Every library's steamapps dir, primary first. Secondary libraries are listed
+# in libraryfolders.vdf; games installed there stay invisible if only the
+# primary library is scanned.
+LIB_APPS=("$APPS")
+if [[ -f "$APPS/libraryfolders.vdf" ]]; then
+  while IFS= read -r lib; do
+    [[ -d "$lib/steamapps" && "$lib/steamapps" != "$APPS" ]] && LIB_APPS+=("$lib/steamapps")
+  done < <(grep -Po '"path"\s+"\K[^"]+' "$APPS/libraryfolders.vdf" | sed 's/\\\\/\\/g')
+fi
+
 mkdir -p "$LOGDIR" "$(dirname "$FLAG")"
 REPORT="$LOGDIR/smoke-$(date +%Y%m%d-%H%M%S).md"
 
-cleanup() { rm -f "$FLAG"; }
-trap cleanup EXIT INT TERM
+# A flag that already exists belongs to whoever set it. This run only owns
+# a flag it creates itself (see the touch further down).
+FLAG_PREEXISTING=0
+[[ -e "$FLAG" ]] && FLAG_PREEXISTING=1
+cleanup() { ((FLAG_PREEXISTING)) || rm -f "$FLAG"; }
+trap cleanup EXIT
+# INT and TERM have to leave, not just clean up: under one shared trap bash
+# runs cleanup and then resumes the script, so Ctrl-C never stopped a run.
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
 
 pgrep -x steam >/dev/null || { echo "Steam is not running." >&2; exit 2; }
 
 in_list() { local x="$1"; shift; for y in "$@"; do [[ "$x" == "$y" ]] && return 0; done; return 1; }
-name_of() { grep -Po '"name"\s+"\K[^"]+' "$APPS/appmanifest_$1.acf" 2>/dev/null || echo "?"; }
+name_of() { local a; for a in "${LIB_APPS[@]}"; do grep -Po '"name"\s+"\K[^"]+' "$a/appmanifest_$1.acf" 2>/dev/null && return 0; done; echo "?"; }
 # Proton build Steam has mapped for an appid (per-game mapping, else the global "0" default).
 tool_of() {
   python3 - "$1" "$STEAM/config/config.vdf" <<'PY' 2>/dev/null || echo "?"
@@ -49,11 +67,15 @@ if (($#)); then
   IDS=("$@")
 else
   IDS=()
-  for m in "$APPS"/appmanifest_*.acf; do
-    id=$(grep -Po '"appid"\s+"\K\d+' "$m")
-    [[ -d "$APPS/compatdata/$id" ]] || continue
-    in_list "$id" "${NOT_GAMES[@]}" && continue
-    IDS+=("$id")
+  for a in "${LIB_APPS[@]}"; do
+    for m in "$a"/appmanifest_*.acf; do
+      [[ -e "$m" ]] || continue
+      id=$(grep -Po '"appid"\s+"\K\d+' "$m")
+      [[ -d "$a/compatdata/$id" ]] || continue
+      in_list "$id" "${NOT_GAMES[@]}" && continue
+      in_list "$id" "${IDS[@]}" && continue
+      IDS+=("$id")
+    done
   done
 fi
 
