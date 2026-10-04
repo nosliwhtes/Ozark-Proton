@@ -35,7 +35,11 @@ fi
 mkdir -p "$LOGDIR" "$(dirname "$FLAG")"
 REPORT="$LOGDIR/smoke-$(date +%Y%m%d-%H%M%S).md"
 
-cleanup() { rm -f "$FLAG"; }
+# A flag that already exists belongs to whoever set it. This run only owns
+# a flag it creates itself (see the touch further down).
+FLAG_PREEXISTING=0
+[[ -e "$FLAG" ]] && FLAG_PREEXISTING=1
+cleanup() { ((FLAG_PREEXISTING)) || rm -f "$FLAG"; }
 trap cleanup EXIT INT TERM
 
 pgrep -x steam >/dev/null || { echo "Steam is not running." >&2; exit 2; }
