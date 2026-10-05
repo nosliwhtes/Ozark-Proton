@@ -19,6 +19,7 @@ This ledger records upstream refs found in patch headers. "unverified" means the
 | icuuc-icuin-forwarder-dlls.patch | explicit | none in header | add icuuc/icuin forwarder DLLs | no-upstream-ref |
 | kernel32-refresh-power-status-asynchronously.patch | explicit | none in header | refresh system power status asynchronously | no-upstream-ref |
 | NCryptDecrypt_implementation.patch | explicit | none in header | implement NCryptDecrypt | no-upstream-ref |
+| ntdll-block-apcs-until-process-exit-state-is-set.patch | explicit | none in header | keep server signals blocked until process-exit state is set (Warframe exit hang) | no-upstream-ref |
 | ntdll-keep-builtin-amd-ags-ahead-of-version-heuristic.patch | explicit | Wine commit e87e9626a64893481fd45b875360c41717452f0b | keep builtin amd_ags_x64 ahead of version heuristic | unverified |
 | ntdll-prefer-native-version-resource-heuristics.patch | explicit | Wine commit a31ec8da9572672e04ae46792a398da942649875 | prefer native DLLs via version-resource heuristics | unverified |
 | ntdll-remove-redundant-packed-split-lock.patch | explicit | none in header | remove redundant packed-code split lock | no-upstream-ref |
@@ -28,6 +29,7 @@ This ledger records upstream refs found in patch headers. "unverified" means the
 | ole32-clipboard-stale-handle-2-fix.patch | explicit | https://bugs.winehq.org/show_bug.cgi?id=59519 | validate cached clipboard window handle | unverified |
 | registry_RRF_RT_REG_SZ-RRF_RT_REG_EXPAND_SZ.patch | explicit | none in header | fix RegGetValueW dwFlags validation | no-upstream-ref |
 | secur32-fallback-without-no-shuffle-extensions.patch | explicit | none in header | fall back when GnuTLS lacks NO_SHUFFLE_EXTENSIONS | no-upstream-ref |
+| server-dont-touch-freed-handle-table-in-close-handle.patch | explicit | none in header | don't touch a freed handle table in close_handle() (Richard Burns Rally exit crash) | no-upstream-ref |
 | unity_crash_hotfix.patch | explicit | none in header | Unity crash hotfix (DXGI debug interface) | no-upstream-ref |
 | urlmon-pump-thread-user-messages-during-synchronous-bind.patch | explicit | none in header | pump thread user messages during synchronous binds | no-upstream-ref |
 | version-GetFileVersionInfoByHandle-stub.patch | explicit | none in header | add GetFileVersionInfoByHandle stub | no-upstream-ref |
