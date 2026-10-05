@@ -33,12 +33,12 @@ Ozark's defaults are in `user_settings.py`. Anything you set in a game's launch 
 
 To capture logs for one game, add `OZARK_TEST=1 %command%` to its launch options. Logs go to `~/ozark-logs/steam-<appid>.log`. Logging stays off otherwise.
 
-Games with anti-cheat work or don't work because of the anti-cheat, not because of Proton. See [ANTICHEAT.md](ANTICHEAT.md).
+Whether an anti-cheat game runs is mostly up to its anti-cheat, not Proton. If one fails on Ozark but works on stock GE-Proton, that's an Ozark bug. [ANTICHEAT.md](ANTICHEAT.md) explains what to check and how to report it.
 
 ## For maintainers
 
 - **Releasing.** Push an annotated tag named `Ozark-Proton<major>-<minor>-<rev>` (for example `Ozark-Proton11-7-6`). GitHub Actions builds it, creates the release, and attaches the tarball and checksum. The tag's message becomes the release notes, so write it for players.
-- **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync` branch. When the merge is clean, it opens a pull request. When there's a conflict, the run fails, and the failure shows up in Actions.
+- **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync` branch. When the merge is clean, it opens a pull request. When there's a conflict, the run fails, and the failure shows up in Actions. Opening the pull request needs **Allow GitHub Actions to create and approve pull requests** turned on under Settings → Actions → General.
 - **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML and build-script syntax. It also makes sure a failed patch stops the build.
 - **Smoke test.** `tools/ozark-smoke.sh [appid...]` starts each game through Steam and lets it run for 90 seconds (set `WAIT` to change that). Then it closes the game, scans the log, and writes a report to `~/ozark-logs/`. It really launches your games, so run it only when you mean to. Anti-cheat games are skipped.
 - **Game fixes.** At build time, `gamefixes/<appid>.py` files are copied over GE's protonfixes. A file with the same app ID replaces GE's.

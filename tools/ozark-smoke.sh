@@ -43,8 +43,25 @@ cleanup() { ((FLAG_PREEXISTING)) || rm -f "$FLAG"; }
 trap cleanup EXIT
 # INT and TERM have to leave, not just clean up: under one shared trap bash
 # runs cleanup and then resumes the script, so Ctrl-C never stopped a run.
-trap 'cleanup; exit 130' INT
-trap 'cleanup; exit 143' TERM
+# The game runs under Steam, not this script, so it survives our exit unless
+# we stop it first. If Steam hasn't started it yet, the launch is already
+# queued, so wait out the boot window and stop it once it shows up. A second
+# INT or TERM during any of this exits at once.
+ACTIVE_ID=""
+LAUNCH_DEADLINE=0   # set while a launch is pending: when the boot wait gives up
+on_signal() {
+  trap "cleanup; exit $1" INT TERM
+  if [[ -n "$ACTIVE_ID" ]]; then
+    if ((LAUNCH_DEADLINE)) && ! game_pids "$ACTIVE_ID" >/dev/null; then
+      echo "Waiting up to $((LAUNCH_DEADLINE - SECONDS))s for $ACTIVE_ID to start so it can be stopped. Press Ctrl-C again to skip." >&2
+      while ((SECONDS < LAUNCH_DEADLINE)) && ! game_pids "$ACTIVE_ID" >/dev/null; do sleep 1; done
+    fi
+    stop_game "$ACTIVE_ID"
+  fi
+  cleanup; exit "$1"
+}
+trap 'on_signal 130' INT
+trap 'on_signal 143' TERM
 
 pgrep -x steam >/dev/null || { echo "Steam is not running." >&2; exit 2; }
 
@@ -107,17 +124,21 @@ for id in "${IDS[@]}"; do
   fi
   log="$LOGDIR/steam-$id.log"; rm -f "$log"
   echo ">> $id $name"
+  ACTIVE_ID="$id"; LAUNCH_DEADLINE=$((SECONDS + BOOT_TIMEOUT))
   xdg-open "steam://rungameid/$id" >/dev/null 2>&1 || steam "steam://rungameid/$id" >/dev/null 2>&1 &
 
   started=0
   for _ in $(seq 1 "$BOOT_TIMEOUT"); do game_pids "$id" >/dev/null && { started=1; break; }; sleep 1; done
+  LAUNCH_DEADLINE=0
   if ((started == 0)); then
+    ACTIVE_ID=""
     echo "| $id | $name | ? | FAIL | never started (${BOOT_TIMEOUT}s) |" >> "$REPORT"; fail=$((fail+1)); continue
   fi
 
   alive=1
   for _ in $(seq 1 "$WAIT"); do game_pids "$id" >/dev/null || { alive=0; break; }; sleep 1; done
   stop_game "$id"
+  ACTIVE_ID=""
 
   proton=$(tool_of "$id"); notes=(); log_ok=0
   if [[ -f "$log" ]]; then
