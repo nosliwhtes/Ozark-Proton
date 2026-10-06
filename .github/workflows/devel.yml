@@ -6,10 +6,14 @@ concurrency:
   group: ${{ github.ref_name }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   version:
+    timeout-minutes: 15
     name: Version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       tag_abbrev: ${{ steps.version.outputs.tag_abbrev }}
       tag_offset: ${{ steps.version.outputs.tag_offset }}
@@ -18,7 +22,7 @@ jobs:
       branch: ${{ steps.version.outputs.branch }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -35,6 +39,11 @@ jobs:
         echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
 
   build:
+    # Pass the build job's attestation scopes through the reusable-workflow call.
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     name: Build
     needs: version
     uses: ./.github/workflows/_job_build.yml

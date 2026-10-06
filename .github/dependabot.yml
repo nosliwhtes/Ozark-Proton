@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: weekly
+    # Exact top-level submodule names/paths from .gitmodules, not nvidia-libs/dxvk-nvapi.
+    allow:
+      - dependency-name: dxvk
+      - dependency-name: vkd3d-proton
+      - dependency-name: dxvk-nvapi

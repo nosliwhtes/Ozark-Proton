@@ -10,16 +10,23 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   upload:
+    permissions:
+      contents: write
+    timeout-minutes: 15
     name: Upload ${{ inputs.name }}
     strategy:
       matrix:
         include:
           - file: ${{ inputs.name }}.tar.gz
           - file: ${{ inputs.name }}.sha512sum
+          - file: ${{ inputs.name }}.tar.gz.sha256
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Verify release exists
@@ -30,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download ${{ matrix.file }} artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ matrix.file }}
 
