@@ -50,6 +50,9 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The job adds an `upstream` remote pointing at GE, and without this
+          # gh would resolve the base repo from remotes and target GE's repo.
+          GH_REPO: ${{ github.repository }}
           BEHIND: ${{ steps.merge.outputs.behind }}
         run: |
           if gh pr view upstream-sync --json state -q .state 2>/dev/null | grep -q OPEN; then
