@@ -24,15 +24,20 @@ def function(source, name):
 
 PREFIX = r'''
 #include <assert.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+typedef long long LONGLONG;
 typedef int HRESULT; typedef int BOOL; typedef int LONG; typedef unsigned DWORD;
 typedef unsigned UINT; typedef int HWND;
 typedef struct { LONG left, top, right, bottom; } RECT;
 #define TRUE 1
 #define FALSE 0
 #define DD_OK 0
+#define DDERR_INVALIDPARAMS -2
+#define MINLONG INT_MIN
+#define MAXLONG INT_MAX
 #define DDSCAPS_PRIMARYSURFACE 1
 #define DDOVER_HIDE 2
 #define DDOVER_SHOW 4
@@ -56,7 +61,7 @@ struct ddraw_surface {
 };
 typedef struct ddraw_surface IDirectDrawSurface7;
 static struct ddraw_surface *impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *p) { return p; }
-static int redraws, restores, setter_result, hidden_redraws;
+static int redraws, restores, setter_result, hidden_redraws, setter_calls;
 static RECT regions[16];
 static HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *s, const RECT *r, BOOL a, int b) {
     assert(redraws < 16); regions[redraws++] = *r;
@@ -68,7 +73,7 @@ static void ddraw_set_swapchain_window(struct ddraw *d, HWND window) {}
 static HWND ddraw_find_overlay_window(struct ddraw *d) { return 20; }
 static void wined3d_mutex_lock(void) {}
 static void wined3d_mutex_unlock(void) {}
-static HRESULT wined3d_texture_set_overlay_position(void *t, unsigned i, LONG x, LONG y) { return setter_result; }
+static HRESULT wined3d_texture_set_overlay_position(void *t, unsigned i, LONG x, LONG y) { setter_calls++; return setter_result; }
 static void SetRect(RECT *r, LONG l, LONG t, LONG right, LONG b) { *r = (RECT){l,t,right,b}; }
 static void OffsetRect(RECT *r, LONG x, LONG y) { r->left += x; r->right += x; r->top += y; r->bottom += y; }
 '''
@@ -80,7 +85,7 @@ static void reset(void) {
     d = (struct ddraw){.wined3d_swapchain=(void *)1,.d3d_window=10,.dest_window=20};
     overlay = (struct ddraw_surface){.ddraw=&d};
     dst = (struct ddraw_surface){.ddraw=&d,.surface_desc.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE};
-    other = dst; redraws = restores = hidden_redraws = setter_result = 0;
+    other = dst; redraws = restores = hidden_redraws = setter_result = setter_calls = 0;
     ddraw_surface_set_visible_overlay(&overlay,&src,&dst,&a,DDOVER_SHOW);
     redraws = restores = hidden_redraws = 0;
 }
@@ -95,6 +100,31 @@ int main(int argc, char **argv) {
         assert(hidden_redraws == 1 && redraws == 2);
         assert(regions[0].left == a.left && regions[1].left == x);
         assert(restores == 0);
+    } else if (!strcmp(argv[1],"extreme-x") || !strcmp(argv[1],"extreme-y")) {
+        int axis_x = !strcmp(argv[1],"extreme-x");
+        RECT old = axis_x ? (RECT){INT_MIN,2,INT_MIN+10,12} : (RECT){1,INT_MIN,11,INT_MIN+10};
+        d.overlay_dst_rect = old;
+        int x = axis_x ? 0 : 1, y = axis_x ? 2 : 0;
+        assert(ddraw_surface7_SetOverlayPosition(&overlay,x,y) == DD_OK);
+        assert(d.overlay_dst_rect.left == x && d.overlay_dst_rect.top == y);
+        assert(d.overlay_dst_rect.right == x+10 && d.overlay_dst_rect.bottom == y+10);
+        assert(hidden_redraws == 1 && redraws == 2 && restores == 0);
+        assert(!memcmp(&regions[0], &old, sizeof(old)));
+        assert(!memcmp(&regions[1], &d.overlay_dst_rect, sizeof(old)));
+    } else if (!strcmp(argv[1],"large-negative-delta")) {
+        d.overlay_dst_rect = (RECT){INT_MAX-10,INT_MAX-10,INT_MAX,INT_MAX};
+        assert(ddraw_surface7_SetOverlayPosition(&overlay,-100,-200) == DD_OK);
+        assert(d.overlay_dst_rect.left == -100 && d.overlay_dst_rect.top == -200);
+        assert(d.overlay_dst_rect.right == -90 && d.overlay_dst_rect.bottom == -190);
+        assert(hidden_redraws == 1 && redraws == 2 && restores == 0);
+    } else if (!strcmp(argv[1],"overflow-endpoint") || !strcmp(argv[1],"overflow-width")) {
+        if (!strcmp(argv[1],"overflow-width")) d.overlay_dst_rect = (RECT){INT_MIN,0,INT_MAX,10};
+        RECT old = d.overlay_dst_rect;
+        int x = !strcmp(argv[1],"overflow-width") ? INT_MIN : INT_MAX;
+        int y = !strcmp(argv[1],"overflow-width") ? 0 : INT_MAX;
+        assert(ddraw_surface7_SetOverlayPosition(&overlay,x,y) == DDERR_INVALIDPARAMS);
+        assert(setter_calls == 0);
+        assert(!memcmp(&d.overlay_dst_rect,&old,sizeof(old)) && redraws == 0);
     } else if (!strcmp(argv[1],"failed-position")) {
         setter_result = -1; assert(ddraw_surface7_SetOverlayPosition(&overlay,30,40) == -1);
         assert(d.overlay_dst_rect.left == a.left && redraws == 0);
@@ -147,10 +177,10 @@ class OverlayPatchTests(unittest.TestCase):
         functions += cleanup[:cleanup.index('    /* The refcount test')] + '}\n'
         harness = directory/'overlay.c';harness.write_text(PREFIX+functions+MAIN)
         cls.binary = directory/'overlay'
-        subprocess.run(['cc','-std=c99','-O0',str(harness),'-o',str(cls.binary)],check=True,capture_output=True)
+        subprocess.run(['cc','-std=c99','-O1','-fsanitize=undefined','-fno-sanitize-recover=undefined',str(harness),'-o',str(cls.binary)],check=True,capture_output=True)
 
     def test_overlay_lifecycle(self):
-        for case in ['position','overlap','failed-position','update','replace','hide','destroy-overlay','destroy-destination','destroy-unrelated']:
+        for case in ['position','overlap','extreme-x','extreme-y','large-negative-delta','overflow-endpoint','overflow-width','failed-position','update','replace','hide','destroy-overlay','destroy-destination','destroy-unrelated']:
             with self.subTest(case=case):
                 result=subprocess.run([str(self.binary),case],capture_output=True,text=True)
                 self.assertEqual(result.returncode,0,result.stderr)
