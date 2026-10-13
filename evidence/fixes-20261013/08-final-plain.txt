@@ -1,0 +1,33 @@
+Compile: g++ -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-ibwxuxb_ /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-ibwxuxb_/url_unescape_tests
+test_caller_file_urls (__main__.UrlUnescapeTests.test_caller_file_urls) ... PASS caller_file_urls
+ok
+test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom) ... PASS caller_oom
+ok
+test_caller_paths (__main__.UrlUnescapeTests.test_caller_paths) ... PASS caller_paths
+ok
+test_caller_result_oom (__main__.UrlUnescapeTests.test_caller_result_oom) ... PASS caller_result_oom
+ok
+test_decoder_oom (__main__.UrlUnescapeTests.test_decoder_oom) ... PASS decoder_oom
+ok
+test_existing_unicode_narrowing (__main__.UrlUnescapeTests.test_existing_unicode_narrowing) ... KNOWN ADJACENT DEFECT: abc U+0100 def decodes to abc (WCHAR-to-char narrowing)
+PASS existing_unicode_narrowing
+ok
+test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets) ... PASS final_triplets
+ok
+test_malformed_semantics (__main__.UrlUnescapeTests.test_malformed_semantics) ... PASS malformed_semantics
+ok
+test_ordinary_decoder (__main__.UrlUnescapeTests.test_ordinary_decoder) ... PASS ordinary_decoder
+ok
+test_short_no_allocation (__main__.UrlUnescapeTests.test_short_no_allocation) ... PASS short_no_allocation
+ok
+test_trailing_triplets (__main__.UrlUnescapeTests.test_trailing_triplets) ... PASS trailing_triplets
+ok
+test_utf8_triplets (__main__.UrlUnescapeTests.test_utf8_triplets) ... PASS utf8_triplets
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.007s
+
+OK
+
+Exit code: 0

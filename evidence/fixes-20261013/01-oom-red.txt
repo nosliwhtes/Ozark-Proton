@@ -1,0 +1,68 @@
+$ ulimit -c 0; python3 tests/run_url_unescape_tests.py --sanitize -v
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/url_unescape_tests
+test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom) ... FAIL
+test_decoder_oom (__main__.UrlUnescapeTests.test_decoder_oom) ... FAIL
+
+======================================================================
+FAIL: test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 27, in test_caller_oom
+    self.check_case("caller_oom")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108:18: runtime error: store to null pointer of type 'char'
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==858201==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x0000004055ea bp 0x7ffc56a05e70 sp 0x7ffc56a05db0 T0)
+==858201==The signal is caused by a WRITE memory access.
+==858201==Hint: address points to the zero page.
+    #0 0x4055ea in url_unescape /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108
+    #1 0x406521 in steamclient_dos_to_unix_path(char const*, int) /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:167
+    #2 0x406f94 in caller_oom /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp:120
+    #3 0x4071e4 in main /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp:135
+    #4 0x78247cc2a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65)
+    #5 0x78247cc2a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65)
+    #6 0x4029d4 in _start (/home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/url_unescape_tests+0x4029d4) (BuildId: 2641be8b4c6f266fb0f26b2917e62c54d2f865ae)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108 in url_unescape
+==858201==ABORTING
+
+
+======================================================================
+FAIL: test_decoder_oom (__main__.UrlUnescapeTests.test_decoder_oom)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 24, in test_decoder_oom
+    self.check_case("decoder_oom")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108:18: runtime error: store to null pointer of type 'char'
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==858202==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x0000004055ea bp 0x7ffdb59e1980 sp 0x7ffdb59e18c0 T0)
+==858202==The signal is caused by a WRITE memory access.
+==858202==Hint: address points to the zero page.
+    #0 0x4055ea in url_unescape /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108
+    #1 0x4076c8 in decode<void (*)(char16_t*)> /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp:101
+    #2 0x406ccf in decoder_oom /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp:112
+    #3 0x4071c3 in main /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp:134
+    #4 0x7c08d482a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65)
+    #5 0x7c08d482a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65)
+    #6 0x4029d4 in _start (/home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/url_unescape_tests+0x4029d4) (BuildId: 2641be8b4c6f266fb0f26b2917e62c54d2f865ae)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-vwj3ncwo/path_functions.inc:108 in url_unescape
+==858202==ABORTING
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.043s
+
+FAILED (failures=2)
+Exit code: 1

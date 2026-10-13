@@ -1,0 +1,13 @@
+fix/url-unescape-sweep-20261013
+816b030c28a88d783e093fa570fda749b62d1d0e
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Python 3.14.7
+libwine:amd64: /usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so
+53dc5b30fdb24ad07497067df231292f5aac80a6db32012b468874cb2018a37d  /usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so
+Compiler availability: {'g++': '/usr/bin/g++', 'wineg++': None, 'x86_64-w64-mingw32-g++': None}
+Native export: ['0000000000016e40 T RtlUTF8ToUnicodeN']
+All submodules uninitialized: True

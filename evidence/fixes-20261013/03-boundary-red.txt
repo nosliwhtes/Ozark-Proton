@@ -1,0 +1,24 @@
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-slu0r1sk /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-slu0r1sk/url_unescape_tests
+test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom) ... ok
+test_decoder_oom (__main__.UrlUnescapeTests.test_decoder_oom) ... ok
+test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets) ... FAIL
+
+======================================================================
+FAIL: test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 30, in test_final_triplets
+    self.check_case("final_triplets")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : FAIL: decoded output mismatch
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.010s
+
+FAILED (failures=1)
+
+Exit code: 1
