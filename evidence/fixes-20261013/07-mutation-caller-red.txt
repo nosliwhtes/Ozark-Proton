@@ -1,0 +1,24 @@
+$ python3 tests/run_url_unescape_tests.py --source /home/nosliwhtes/.hermes/cache/scratch/ozark-mutation-datzuf87/unixlib.cpp --sanitize -v UrlUnescapeTests.test_caller_oom
+Mutation: if (is_url && !url_unescape( srcW + 4 )) return NULL; -> if (is_url) url_unescape( srcW + 4 );
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-z5i3o7kx /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-z5i3o7kx/url_unescape_tests
+test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom) ... FAIL
+
+======================================================================
+FAIL: test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 28, in test_caller_oom
+    self.check_case("caller_oom")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : FAIL: caller must return NULL on decoder allocation failure
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+FAILED (failures=1)
+
+Exit code: 1

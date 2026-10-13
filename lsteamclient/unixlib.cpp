@@ -955,17 +955,17 @@ static unsigned char hexdigit( WCHAR c )
     return 0xff;
 }
 
-static void url_unescape( WCHAR *s )
+static bool url_unescape( WCHAR *s )
 {
     unsigned int i, len;
     unsigned char c, d1, d2;
     char *tmp, *d;
 
     len = wcslen( s );
-    if (len < 3) return;
-    tmp = (char *)malloc( len + 1 );
+    if (len < 3) return true;
+    if (!(tmp = (char *)malloc( len + 1 ))) return false;
     d = tmp;
-    for (i = 0; i < len - 3; ++i)
+    for (i = 0; i <= len - 3; ++i)
     {
         if (s[i] != '%')
         {
@@ -984,6 +984,7 @@ static void url_unescape( WCHAR *s )
     RtlUTF8ToUnicodeN( s, (len + 1) * sizeof(*s), &len, tmp, strlen( tmp ) + 1 );
     free( tmp );
     TRACE( "-> %s.\n", debugstr_w( s ));
+    return true;
 }
 
 char *steamclient_dos_to_unix_path( const char *src, int is_url )
@@ -1028,7 +1029,7 @@ char *steamclient_dos_to_unix_path( const char *src, int is_url )
         if (r)
         {
             srcW[4 + file_part_len] = 0;
-            if (is_url) url_unescape( srcW + 4 );
+            if (is_url && !url_unescape( srcW + 4 )) return NULL;
             collapse_path( srcW, 4 );
             unix_path = get_unix_file_name( srcW );
         }
