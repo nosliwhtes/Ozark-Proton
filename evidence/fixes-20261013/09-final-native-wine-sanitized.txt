@@ -1,0 +1,45 @@
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-1ib9embn /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -ldl -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-1ib9embn/url_unescape_tests
+test_caller_file_urls (__main__.UrlUnescapeTests.test_caller_file_urls) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS caller_file_urls
+ok
+test_caller_oom (__main__.UrlUnescapeTests.test_caller_oom) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS caller_oom
+ok
+test_caller_paths (__main__.UrlUnescapeTests.test_caller_paths) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS caller_paths
+ok
+test_caller_result_oom (__main__.UrlUnescapeTests.test_caller_result_oom) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS caller_result_oom
+ok
+test_decoder_oom (__main__.UrlUnescapeTests.test_decoder_oom) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS decoder_oom
+ok
+test_existing_unicode_narrowing (__main__.UrlUnescapeTests.test_existing_unicode_narrowing) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+KNOWN ADJACENT DEFECT: abc U+0100 def decodes to abc (WCHAR-to-char narrowing)
+PASS existing_unicode_narrowing
+ok
+test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS final_triplets
+ok
+test_malformed_semantics (__main__.UrlUnescapeTests.test_malformed_semantics) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS malformed_semantics
+ok
+test_ordinary_decoder (__main__.UrlUnescapeTests.test_ordinary_decoder) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS ordinary_decoder
+ok
+test_short_no_allocation (__main__.UrlUnescapeTests.test_short_no_allocation) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS short_no_allocation
+ok
+test_trailing_triplets (__main__.UrlUnescapeTests.test_trailing_triplets) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS trailing_triplets
+ok
+test_utf8_triplets (__main__.UrlUnescapeTests.test_utf8_triplets) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS utf8_triplets
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.036s
+
+OK
+
+Exit code: 0
