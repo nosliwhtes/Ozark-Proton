@@ -36,6 +36,8 @@ apply_all_in_dir() {
     # Assassin's Creed DX10: preserve fullscreen presentation across Alt+Tab.
     apply_patch "../patches/dxvk/assassins-creed-keep-fullscreen-on-focus-loss.patch"
     # HDR instance-extension fix is upstream in DXVK 3c40ca1b946b293078f55dcd780100073f7ab75c.
+    # Do not advertise HDR when Wine reports an SDR output, even with DXVK_HDR=1.
+    apply_patch "../patches/dxvk/dxgi-respect-output-hdr-state.patch"
     popd
 
     pushd vkd3d-proton
@@ -112,7 +114,7 @@ apply_all_in_dir() {
 
 ### (2-2) EM-11/WINE-WAYLAND PATCH SECTION ###
 
-    # EM-11 5a1ae24b090b on Wine bleeding-edge 542ca26b64ed.
+    # EM-11 5a1ae24b090b on Wine bleeding-edge 981e2f0b9007.
     # Import and exclusion details: wine-hotfixes/wine-wayland/README.md
 
     echo "WINE: -WINEOPENXR- copy files into wine"
@@ -173,6 +175,7 @@ apply_all_in_dir() {
     -W wintrust-WTHelperGetProvCertFromChain \
     -W winex11-ime-check-thread-data \
     -W winex11-Fixed-scancodes \
+    -W winedevice-Default_Drivers \
     -W Staging
 
     # Manual sets use GE-rebased copies where their context overlaps our earlier patches.
@@ -209,6 +212,7 @@ apply_all_in_dir() {
     # Staging - applied manually
     # winex11-ime-check-thread-data - applied manually, needed rebase
     # winex11-Fixed-scancodes - applied manually, needed rebase
+    # winedevice-Default_Drivers - applied manually, tests rebased onto upstream ntoskrnl changes
 
     # winex11-WM_WINDOWPOSCHANGING - Causes origin to freeze -- currently also disabled in upstream staging
     # ntdll-Junction_Points - breaks CEG drm -- currently also disabled in upstream staging
@@ -218,6 +222,9 @@ apply_all_in_dir() {
     # mfplat-streaming-support -- interferes with proton's mfplat -- currently also disabled in upstream staging
     # wined3d-SWVP-shaders -- interferes with proton's wined3d -- currently also disabled in upstream staging
     # wined3d-Indexed_Vertex_Blending -- interferes with proton's wined3d -- currently also disabled in upstream staging
+
+    echo "WINE: -STAGING- winedevice-Default_Drivers manually applied"
+    apply_all_in_dir "../patches/wine-hotfixes/wine-staging/winedevice-Default_Drivers/"
 
     echo "WINE: -STAGING- ntdll-Hide_Wine_Exports manually applied"
     apply_all_in_dir "../patches/wine-hotfixes/wine-staging/ntdll-Hide_Wine_Exports/"

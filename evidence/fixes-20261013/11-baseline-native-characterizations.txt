@@ -1,0 +1,24 @@
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-qi1k1r2t /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -ldl -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-qi1k1r2t/url_unescape_tests
+test_existing_unicode_narrowing (__main__.UrlUnescapeTests.test_existing_unicode_narrowing) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+KNOWN ADJACENT DEFECT: abc U+0100 def decodes to abc (WCHAR-to-char narrowing)
+PASS existing_unicode_narrowing
+ok
+test_malformed_semantics (__main__.UrlUnescapeTests.test_malformed_semantics) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS malformed_semantics
+ok
+test_ordinary_decoder (__main__.UrlUnescapeTests.test_ordinary_decoder) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS ordinary_decoder
+ok
+test_short_no_allocation (__main__.UrlUnescapeTests.test_short_no_allocation) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS short_no_allocation
+ok
+test_caller_paths (__main__.UrlUnescapeTests.test_caller_paths) ... Backend: native Wine RtlUTF8ToUnicodeN (/usr/lib/x86_64-linux-gnu/wine/x86_64-unix/ntdll.so)
+PASS caller_paths
+ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.016s
+
+OK
+
+Exit code: 0

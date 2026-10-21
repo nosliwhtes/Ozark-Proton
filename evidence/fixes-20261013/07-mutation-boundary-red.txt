@@ -1,0 +1,52 @@
+$ python3 tests/run_url_unescape_tests.py --source /home/nosliwhtes/.hermes/cache/scratch/ozark-mutation-si_5svyc/unixlib.cpp --sanitize -v UrlUnescapeTests.test_final_triplets UrlUnescapeTests.test_trailing_triplets UrlUnescapeTests.test_utf8_triplets
+Mutation: i <= len - 3 -> i < len - 3
+Compile: g++ -fsanitize=address,undefined -fno-omit-frame-pointer -no-pie -std=c++17 -Wall -Wextra -Werror -Wno-unused-variable -g -I /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-v1s9cl2c /home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/url_unescape_harness.cpp -o /home/nosliwhtes/.hermes/cache/scratch/ozark-url-tests-v1s9cl2c/url_unescape_tests
+test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets) ... FAIL
+test_trailing_triplets (__main__.UrlUnescapeTests.test_trailing_triplets) ... FAIL
+test_utf8_triplets (__main__.UrlUnescapeTests.test_utf8_triplets) ... FAIL
+
+======================================================================
+FAIL: test_final_triplets (__main__.UrlUnescapeTests.test_final_triplets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 31, in test_final_triplets
+    self.check_case("final_triplets")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : FAIL: decoded output mismatch
+
+
+======================================================================
+FAIL: test_trailing_triplets (__main__.UrlUnescapeTests.test_trailing_triplets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 34, in test_trailing_triplets
+    self.check_case("trailing_triplets")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : FAIL: decoded output mismatch
+
+
+======================================================================
+FAIL: test_utf8_triplets (__main__.UrlUnescapeTests.test_utf8_triplets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 37, in test_utf8_triplets
+    self.check_case("utf8_triplets")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/nosliwhtes/Projects/ozark-url-unescape-fix/tests/run_url_unescape_tests.py", line 21, in check_case
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : FAIL: iconv conversion failed (outside valid-input adapter)
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.011s
+
+FAILED (failures=3)
+
+Exit code: 1
