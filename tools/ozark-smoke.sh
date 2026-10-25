@@ -18,7 +18,9 @@ BOOT_TIMEOUT="${BOOT_TIMEOUT:-120}"
 
 # Kernel anti-cheat / EAC-BattlEye titles: launching them offline proves nothing and
 # repeated start/kill can flag the account. See ANTICHEAT.md.
-SKIP=(553850 2479810 1144200)
+# Call of Duty HQ (including MW4) requires RICOCHET's Windows kernel driver.
+# Keep explicit app-ID requests on the same exclusion path as library discovery.
+SKIP=(553850 2479810 1144200 1938090)
 # Steam runtimes / Proton builds / redistributables are not games.
 NOT_GAMES=(228980 1070560 1391110 1628350 4183110 1493710 2180100 4628710)
 
