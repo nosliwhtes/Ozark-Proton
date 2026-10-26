@@ -9,7 +9,7 @@
 
 Ozark is GE-Proton with a small set of extra changes, tuned for an NVIDIA RTX 5080 on Linux:
 
-- **Newer graphics layers.** DXVK `f20f363` and VKD3D-Proton `b206eb6`, newer than the versions in GE-Proton11-7.
+- **GE-Proton11-11 base.** Includes the official release's DXVK `2cb4018` and VKD3D-Proton `0bb64c5`, with Ozark's customizations retained. See [integration notes](docs/ge11-11-integration.md) for component pins and validation limits.
 - **NVIDIA-friendly defaults.** NVAPI stays on (for DLSS and Reflex). The NVIDIA shader cache limit goes up to 10 GB, and the driver no longer deletes old entries. Games that have already built their shaders stutter less the next time you play.
 - **A few Ozark game fixes.** They live in `gamefixes/`. Right now there is one: Cult of the Lamb loads a `winhttp.dll` from the game folder first, so BepInEx mods work.
 - **Release tooling.** Tagged builds and a weekly check for GE updates.
@@ -39,7 +39,7 @@ Whether an anti-cheat game runs is mostly up to its anti-cheat, not Proton. If o
 
 - **Releasing.** Push an annotated tag named for the build date, `Ozark-Proton-YYYY-MM-DD` (for example `Ozark-Proton-2026-10-05`). If you release twice on the same day, add a suffix such as `Ozark-Proton-2026-10-05-2`. Releases up to 2026-09-28 used the old `Ozark-Proton11-7-N` names. GitHub Actions builds it, creates the release, and attaches the tarball and checksum. The tag's message becomes the release notes, so write it for players.
 - **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync` branch. When the merge is clean, it opens a pull request. When there's a conflict, the run fails, and the failure shows up in Actions. Opening the pull request needs **Allow GitHub Actions to create and approve pull requests** turned on under Settings → Actions → General.
-- **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML and build-script syntax. It also makes sure a failed patch stops the build.
+- **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML, script syntax, fail-fast patch preparation, and smoke-test exclusions using fake Steam commands. These checks do not build Proton or launch games.
 - **Smoke test.** `tools/ozark-smoke.sh [appid...]` starts each game through Steam and lets it run for 90 seconds (set `WAIT` to change that). Then it closes the game, scans the log, and writes a report to `~/ozark-logs/`. It really launches your games, so run it only when you mean to. Anti-cheat games are skipped.
 - **Game fixes.** At build time, `gamefixes/<appid>.py` files are copied over GE's protonfixes. A file with the same app ID replaces GE's.
 
@@ -515,24 +515,45 @@ The build will be placed within the build directory as SOME-BUILD-NAME-HERE.tar.
 ## Options
 
 
-###### Enable HDR
+<a id="enable-hdr"></a>
 
-It should work if you have:
+###### HDR
 
-- A compositor with HDR support
-- A game with HDR support.
-- A monitor with HDR support.
+HDR is detected automatically; `PROTON_ENABLE_HDR=1` and `PROTON_USE_HDR=1`
+are no longer required. The game, monitor, compositor, and Vulkan presentation
+path must support HDR, and HDR must be enabled in the desktop or Gamescope.
+
+This covers DX11 through DXVK and DX12 through VKD3D-Proton: both use the
+DXVK-provided DXGI for output queries, with their respective Vulkan presenters
+checking HDR surface support.
+
+- Native Wine Wayland uses the compositor's per-output color-management state.
+  Select that driver with `PROTON_ENABLE_WAYLAND=1` when using a native Wayland
+  desktop outside Gamescope.
+- Gamescope's XWayland path uses its HDR output feedback. Ordinary X11/XWayland
+  paths without HDR feedback default to SDR; this does not add HDR support to them.
+- SDR outputs remain SDR, including when other connected monitors use HDR.
+
+For native Wine Wayland without Gamescope, use:
 
 ```bash
-PROTON_ENABLE_HDR=1 %command%
+PROTON_ENABLE_WAYLAND=1 %command%
 ```
 
+Remove `PROTON_ENABLE_HDR=1`, `PROTON_USE_HDR=1`, and `DXVK_HDR=1` from the
+game's launch options to use automatic detection. This applies to both DX11
+and DX12. When using Gamescope, keep its HDR configuration and use Wine's
+default XWayland driver instead of adding the Wayland option above.
+
+Use `DXVK_NO_HDR=1 %command%` to disable HDR reporting. The old Proton HDR
+options are still accepted for compatibility; setting either to `0` disables
+HDR (if both are set, `PROTON_USE_HDR` takes precedence). Explicit HDR opt-in
+is retained for older X11 HDR WSI implementations without output feedback.
+
 > [!NOTE]
-> Setting PROTON_ENABLE_HDR=1 does NOT enable the  Wine Wayland driver. Gamescope
-> can use PROTON_ENABLE_HDR, and automatically enabling native Wine Wayland
-> here would break that path. For HDR outside of gamescope, enable PROTON_ENABLE_HDR=1 
-> AND PROTON_ENABLE_WAYLAND=1 together only when using a native wayland desktop and
-> not using gamescope.
+> Automatic detection does not change your desktop's HDR setting, select Wine
+> Wayland automatically, or force the game's own HDR setting on. Gamescope's
+> HDR mode and WSI support still need to be configured normally.
 
 ##### Enabling NTSync
 For NTSync to work, your kernel must be version 6.14 or newer and built with `CONFIG_NTSYNC=y` or `CONFIG_NTSYNC=m`. On non-systemd systems, you must also have a `ulimit -Hn` of 524288 or higher.
@@ -627,6 +648,8 @@ Without HIDRAW access, Wine retains its normal SDL fallback, which does not prov
 |                      | `PROTON_STEAMINPUT_LAYOUT_DS4` | Force the fallback controller to use the DualShock 4 profile instead of automatic layout detection. |
 |                      | `PROTON_STEAMINPUT_LAYOUT_DS5` | Force the fallback controller to use the DualSense profile instead of automatic layout detection. |
 | `wayland`            | `PROTON_USE_WAYLAND` or `PROTON_ENABLE_WAYLAND` | Enables the Wayland driver. |
+| `hdr`                | `PROTON_ENABLE_HDR` or `PROTON_USE_HDR` | Legacy HDR overrides; no longer required for automatic detection in DX11 or DX12. Set to `0` to disable HDR reporting. If both are set, `PROTON_USE_HDR` takes precedence. Does not select the Wayland driver. See [HDR](#hdr). |
+|                      | `DXVK_NO_HDR` | Set to `1` to disable HDR reporting on both Wine display drivers, including for DX12 through the shared DXGI implementation. Takes precedence over HDR opt-in flags. |
 |                      | `PROTON_USE_X11_EXCLUSIVE` | Under Wine-Wayland, use `winex11.drv` only for the executable specified by this value. Accepts an exact executable basename such as `Launcher.exe` or a case-insensitive Windows path fragment such as `Vendor\\Launcher.exe`; other processes remain on Wine-Wayland. |
 | `winebth`            | `PROTON_ENABLE_WINEBTH`        | Enables `winebth.sys`, Wine's Bluetooth driver, which is disabled by default. Needed for Bluetooth LE devices such as smart trainers and controllers in Zwift or Rouvy. Requires BlueZ. |
 | `wow64`              | `PROTON_USE_WOW64`             | Enables wow64. |

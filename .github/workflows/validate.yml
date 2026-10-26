@@ -12,6 +12,8 @@ on:
       - '.github/dependabot.yml'
       - 'patches/protonprep-valve-staging.sh'
       - 'configure.sh'
+      - 'tools/ozark-smoke.sh'
+      - 'tools/tests/test_smoke_skip.py'
 
 permissions:
   contents: read
@@ -46,7 +48,11 @@ jobs:
         run: |
           bash -n configure.sh
           bash -n patches/protonprep-valve-staging.sh
+          bash -n tools/ozark-smoke.sh
           echo "shell syntax OK"
+
+      - name: Offline smoke exclusion regression tests
+        run: python3 tools/tests/test_smoke_skip.py
 
       - name: Guard — patch step must fail fast
         shell: bash

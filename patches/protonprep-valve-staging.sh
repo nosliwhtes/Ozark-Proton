@@ -38,12 +38,29 @@ apply_all_in_dir() {
     # HDR instance-extension fix is upstream in DXVK 3c40ca1b946b293078f55dcd780100073f7ab75c.
     # Do not advertise HDR when Wine reports an SDR output, even with DXVK_HDR=1.
     apply_patch "../patches/dxvk/dxgi-respect-output-hdr-state.patch"
+    # Query the active output by default instead of requiring an HDR opt-in.
+    apply_patch "../patches/dxvk/dxgi-auto-detect-hdr.patch"
+    # StarCraft II: avoid GPU hangs with D3D9 constant buffer streaming (#790).
+    apply_patch "../patches/dxvk/starcraft2-disable-constant-buffer-streaming.patch"
+    popd
+
+    pushd d7vk
+    git reset --hard HEAD
+    git clean -xdf
+    apply_patch "../patches/d7vk/d7vk-allow-avx-with-clang.patch"
+    popd
+
+    pushd openvr
+    git reset --hard HEAD
+    git clean -xdf
+    apply_patch "../patches/openvr/openvr-no-msvc-assumption.patch"
     popd
 
     pushd vkd3d-proton
     git reset --hard HEAD
     git clean -xdf
     echo "VKD3D-PROTON: prevent stalled present waits from deadlocking swapchain teardown"
+    echo "VKD3D-PROTON: don't map the parent process image for engine detection (EAC untrusted file, Star Citizen/Hunt)"
     apply_all_in_dir "../patches/vkd3d-proton/"
     popd
 
@@ -87,6 +104,7 @@ apply_all_in_dir() {
         lsteamclient/steam_input_manual.c \
         lsteamclient/steamclient_main.c \
         lsteamclient/steamclient_private.h \
+        lsteamclient/unix_private.h \
         lsteamclient/unixlib.cpp \
         lsteamclient/winISteamController.c \
         lsteamclient/winISteamInput.c
@@ -96,6 +114,13 @@ apply_all_in_dir() {
 
     echo "LSTEAMCLIENT: apply Steam Input and initialization fixes"
     apply_all_in_dir "patches/lsteamclient"
+
+    git checkout -- \
+        vrclient_x64/json_converter.cpp \
+        vrclient_x64/unix_private.h
+
+    echo "VRCLIENT: apply build fixes"
+    apply_all_in_dir "patches/vrclient"
 
 ### (2) WINE PATCHING ###
 
@@ -154,6 +179,7 @@ apply_all_in_dir() {
     -W dbghelp-Debug_Symbols \
     -W version-VerQueryValue \
     -W mf_http_support \
+    -W ntdll-Serial_Port_Detection \
     -W server-PeekMessage \
     -W msxml3-FreeThreadedXMLHTTP60 \
     -W ntdll-ForceBottomUpAlloc \
@@ -188,6 +214,10 @@ apply_all_in_dir() {
     # dbghelp-Debug_Symbols - Ubisoft Connect games (3/3 I had installed and could test) will crash inside pe_load_debug_info function with this enabled
     # version-VerQueryValue - just a test and doesn't apply cleanly. not relevant for gaming
     # mf_http_support - disabled in favor of custom ffmpeg backend video playback solution
+    # ntdll-Serial_Port_Detection - its mountmgr probe opens every /dev/ttyS*, ttyUSB*, ttyACM* without O_NOCTTY
+    #   from winedevice.exe (a session leader without a terminal): the first one becomes its controlling tty and
+    #   is hung up when the prefix shuts down, breaking the program that had it open (e.g. a Sinden lightgun's
+    #   serial link to its driver: the gun stops working after each game)
 
     # server-PeekMessage - already applied
     # msxml3-FreeThreadedXMLHTTP60 - already applied
@@ -318,6 +348,27 @@ apply_all_in_dir() {
     echo "WINE: -GAME FIXES- repair NASCAR 25 protected loader state"
     apply_patch "../patches/game-patches/nascar25-protector.patch"
 
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/847
+    # Original fix by mkrsym1 in dawn-winery/wine-dwproton (ecedc3e2d6d2)
+    echo "WINE: -GAME FIXES- call DriverEntry with a kernel-mode return address for ACE anti-cheat"
+    apply_patch "../patches/game-patches/ace-driverentry-kernel-return-address.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/847
+    # ACE-CORE driver fixes by NelloKudo in dawn-winery/wine-dwproton
+    # (4ef68081d5, 6a06ad015f, e7942574f6, 532d18e79a)
+    echo "WINE: -GAME FIXES- add ntoskrnl MmCopyMemory, ServiceKeyName, MDL view and PsGetContextThread fixes for ACE anti-cheat"
+    apply_patch "../patches/game-patches/ace-ntoskrnl-mmcopymemory-stub.patch"
+    apply_patch "../patches/game-patches/ace-ntoskrnl-service-key-name.patch"
+    apply_patch "../patches/game-patches/ace-ntoskrnl-keep-mdl-section-views-mapped.patch"
+    apply_patch "../patches/game-patches/ace-ntoskrnl-psgetcontextthread-thunk.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/847
+    # ACE-CORE fails DriverEntry unless lsass.exe is running. Backported in
+    # CachyOS/wine-cachyos (3b0c6a64ba, b1fbd12dd0); drop with the Wine 12 rebase.
+    echo "WINE: -GAME FIXES- add and start an lsass.exe SamSs service stub for ACE anti-cheat"
+    apply_patch "../patches/game-patches/ace-lsass-samss-service-stub.patch"
+    apply_patch "../patches/game-patches/ace-wineboot-start-samss-service.patch"
+
 ### END GAME PATCH SECTION ###
 
 ### (2-5) WINE HOTFIX/BACKPORT SECTION ###
@@ -371,6 +422,9 @@ apply_all_in_dir() {
     echo "WINE: -HOTFIX- Fall back when GnuTLS lacks NO_SHUFFLE_EXTENSIONS"
     apply_patch "../patches/wine-hotfixes/pending/secur32-fallback-without-no-shuffle-extensions.patch"
 
+    echo "WINE: -HOTFIX- Backport schannel SECBUFFER_MISSING size fix for incomplete TLS records (upstream 9aee0e71, 35b1e7eb)"
+    apply_patch "../patches/wine-hotfixes/pending/secur32-schannel-fix-incomplete-message-missing-size.patch"
+
     echo "WINE: -HOTFIX- Preserve driver-reported OpenGL GPU identity"
     apply_patch "../patches/wine-hotfixes/pending/wined3d-preserve-runtime-opengl-gpu-description.patch"
 
@@ -379,6 +433,12 @@ apply_all_in_dir() {
 
     echo "WINE: -HOTFIX- Keep Forza background windows unmapped on wlroots"
     apply_patch "../patches/wine-hotfixes/pending/winex11-keep-forza-background-windows-unmapped-on-wlroots.patch"
+
+    echo "WINE: -HOTFIX- Reconcile unsupported minimization on xwayland-satellite"
+    apply_patch "../patches/wine-hotfixes/pending/winex11-handle-unsupported-minimization-on-satellite.patch"
+
+    echo "WINE: -HOTFIX- Do not paint off-desktop minimized frames into retained host windows"
+    apply_patch "../patches/wine-hotfixes/pending/server-clip-off-desktop-minimized-window-paint.patch"
 
     echo "WINE: -HOTFIX- Share selected cursor images across processes"
     apply_patch "../patches/wine-hotfixes/pending/win32u-share-selected-cursors-across-processes.patch"
@@ -430,6 +490,10 @@ apply_all_in_dir() {
     # https://github.com/Frogging-Family/wine-tkg-git/commit/ca0daac62037be72ae5dd7bf87c705c989eba2cb
     echo "WINE: -PENDING- unity crash hotfix"
     apply_patch "../patches/wine-hotfixes/pending/unity_crash_hotfix.patch"
+
+    # llvm-libc: kernel thread ID and no _r_debug warning, neither changes glibc builds
+    echo "WINE: llvm-libc support"
+    apply_all_in_dir "../patches/wine-hotfixes/llvm-libc"
 
     # https://bugs.winehq.org/show_bug.cgi?id=58476
     echo "WINE: -PENDING- RegGetValueW dwFlags hotfix (R.E.A.L VR mod)"
@@ -512,6 +576,9 @@ apply_all_in_dir() {
 
     echo "WINE: expose native DualSense Edge as DualSense for Diablo IV"
     apply_patch "../patches/wine-hotfixes/pending/winebus-diablo-iv-dualsense-edge-identity.patch"
+
+    echo "WINE: -HOTFIX- ntdll: skip needless wake in RtlReleaseSRWLockShared (ValveSoftware/wine#367)"
+    apply_patch "../patches/wine-hotfixes/pending/ntdll-srwlock-skip-needless-shared-release-wake.patch"
 
     # Bluetooth LE GATT and WinRT BLE (Zwift, Rouvy trainers). winebth.sys stays disabled
     # unless PROTON_ENABLE_WINEBTH=1. https://github.com/GloriousEggroll/proton-ge-custom/issues/814
