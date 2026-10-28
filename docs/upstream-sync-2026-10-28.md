@@ -15,10 +15,19 @@ changes, not evidence that a particular game works on this computer.
 
 Wine and graphics pins are unchanged from the [GE11-11 integration](ge11-11-integration.md).
 The owned protonfixes URL remains `nosliwhtes/umu-protonfixes`. Its merged revision
-`2b0d479093f4b6463a05a83ab4cdff51e69d0d84` combines the shipped Ozark
+`6c358c3264530cd0d5fe8deaa6f17dec3b418395` combines the shipped Ozark
 `e6082b5b696be86972c066e0f080c70ca464cf00` and GE's required
 `96b9fc078958f11eeea80240f233c4b1639806a0`. The missing-stage guard,
 early-stage exception handling, CRLF normalization and stage smoke test remain.
+
+Two review corrections preserve intended settings. The new Sony Windows-device
+name fallback runs after `user_settings.py` is loaded, retaining launch environment
+over settings over fallback precedence for Steam and UMU IDs. Star Citizen's
+post-dotnet48 Windows 10 reset bypasses the installed-verb cache: pinned Winetricks
+can change the prefix to Windows 7 without recording a version verb, so an old
+Windows 10 log entry cannot establish the current state. Other protontricks calls
+retain their existing cache behavior. These are source and mocked-process tests,
+not controller or Star Citizen gameplay verification.
 
 ## OptiScaler preservation
 
@@ -72,12 +81,17 @@ protonfixes preparation block in a disposable repository and exercise the
 unchanged prepared option-routing functions with mocked download helpers.
 They check OptiScaler version/name, FSR4/FFX4 routing, disabled behavior and failed
 OptiScaler fallback. No Steam process, game, real prefix or DLL download is used.
+Four launcher tests cover defaults and explicit overrides through the complete
+production constructor and settings initialization, stopped before driver/prefix
+work. The dependency's 38 unit tests include stale-log Windows-version reset,
+unchanged ordinary verb caching, and failed-reset reporting.
 
 ```sh
 git submodule update --init protonfixes
 python3 tools/tests/test_upstream_sync.py
 python3 tools/tests/test_optiscaler_preparation.py
 python3 tools/tests/test_smoke_skip.py
+python3 tools/tests/test_session_defaults.py
 python3 protonfixes/gamefixes_smoke_test.py
 python3 tests/run_url_unescape_tests.py --sanitize
 OZARK_WINE_SOURCE=/path/to/pinned/wine python3 tools/tests/test_overlay_patch.py

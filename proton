@@ -2021,16 +2021,6 @@ class Session:
         if appid == "1850570":
             self.env["PROTON_DEATH_STRANDING_FORCE_ENVIRONMENT_EFFECTS"] = "1"
 
-        # These games read the DualSense audio endpoint name and only start USB
-        # haptics on the Windows-style four-channel endpoint. They never probe its
-        # formats, so the automatic Windows Sony audio mode does not trigger. (#860)
-        if appid in [
-                "2909400",  # Final Fantasy VII Rebirth
-                "2420110",  # Horizon Forbidden West Complete Edition
-                "2561580",  # Horizon Zero Dawn Remastered
-                ]:
-            self.env.setdefault("PROTON_SONY_WINDOWS_DEVICE_NAMES", "1")
-
         if "PROTON_PIPEWIRE_ALSA_PLUGIN" not in self.env:
             if g_proton.host_pe_arch == "aarch64-windows":
                 alsa_arch = "aarch64-linux-gnu"
@@ -2281,6 +2271,23 @@ class Session:
                 log("THERE IS AN ERROR IN YOUR user_settings.py FILE:")
                 log("%s" % sys.exc_info()[1])
                 log("************************************************")
+
+        # Apply this fallback after user_settings so explicit settings and launch
+        # environment overrides both take precedence. Match constructor app IDs.
+        appid = os.environ.get("SteamGameId", 0)
+        if not appid:
+            umu_id = os.environ.get("UMU_ID", "")
+            if umu_id.startswith("umu-") and umu_id[4:].isdigit():
+                appid = umu_id[4:]
+        # These games read the DualSense audio endpoint name and only start USB
+        # haptics on the Windows-style four-channel endpoint. They never probe its
+        # formats, so the automatic Windows Sony audio mode does not trigger. (#860)
+        if appid in [
+                "2909400",  # Final Fantasy VII Rebirth
+                "2420110",  # Horizon Forbidden West Complete Edition
+                "2561580",  # Horizon Zero Dawn Remastered
+                ]:
+            self.env.setdefault("PROTON_SONY_WINDOWS_DEVICE_NAMES", "1")
 
         if "PROTON_LOG" in self.env and nonzero(self.env["PROTON_LOG"]):
             self.env.setdefault("WINEDEBUG", "+timestamp,+pid,+tid,+seh,+unwind,+threadname,+debugstr,+loaddll,+mscoree")

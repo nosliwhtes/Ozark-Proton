@@ -16,6 +16,8 @@ on:
       - 'tools/tests/test_smoke_skip.py'
       - 'tools/tests/test_upstream_sync.py'
       - 'tools/tests/test_optiscaler_preparation.py'
+      - 'tools/tests/test_session_defaults.py'
+      - 'proton'
       - 'patches/protonfixes/**'
       - 'protonfixes'
 
@@ -61,11 +63,15 @@ jobs:
       - name: Offline upstream sync regression tests
         run: python3 tools/tests/test_upstream_sync.py
 
+      - name: Launcher settings precedence regression tests
+        run: python3 tools/tests/test_session_defaults.py
+
       - name: Verify prepared protonfixes behavior
         run: |
           git submodule update --init protonfixes
           python3 protonfixes/gamefixes_smoke_test.py
           python3 tools/tests/test_optiscaler_preparation.py
+          HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) XDG_CACHE_HOME=$(mktemp -d) python3 -m protonfixes.protonfixes_test
 
       - name: Guard — patch step must fail fast
         shell: bash
