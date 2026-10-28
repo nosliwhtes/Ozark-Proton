@@ -72,6 +72,8 @@ apply_all_in_dir() {
     pushd protonfixes
     git reset --hard HEAD
     git clean -xdf
+    # GE removed these overlays before its 96b9fc0 dependency pin gained their
+    # replacement. Retain them until the selected fork includes that implementation.
     echo "PROTONFIXES: add optiscaler support"
     apply_all_in_dir "../patches/protonfixes/"
     popd
@@ -269,7 +271,15 @@ apply_all_in_dir() {
     apply_all_in_dir "../patches/wine-hotfixes/wine-staging/winex11-Window_Style/"
 
     echo "WINE: -STAGING- wininet-Cleanup manually applied"
-    apply_all_in_dir "../wine-staging/patches/wininet-Cleanup/"
+    # Skip 0005: it makes HTTP_ADDREQ_FLAG_REPLACE fail for headers not yet
+    # present, while Windows 10 adds them. TLOU Part II adds Content-Type and
+    # Authorization that way, so its leaderboard requests were sent without
+    # them and rejected (403).
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/463
+    apply_patch "../wine-staging/patches/wininet-Cleanup/0001-wininet-tests-Add-more-tests-for-cookies.patch"
+    apply_patch "../wine-staging/patches/wininet-Cleanup/0002-wininet-tests-Test-auth-credential-reusage-with-host.patch"
+    apply_patch "../wine-staging/patches/wininet-Cleanup/0003-wininet-tests-Check-cookie-behaviour-when-overriding.patch"
+    apply_patch "../wine-staging/patches/wininet-Cleanup/0004-wininet-Strip-filename-if-no-path-is-set-in-cookie.patch"
 
     echo "WINE: -STAGING- Staging manually applied"
     apply_all_in_dir "../wine-staging/patches/Staging/"
@@ -459,6 +469,11 @@ apply_all_in_dir() {
     echo "WINE: -HOTFIX- Reserve top-down space for large-address-aware WoW64 applications"
     apply_patch "../patches/wine-hotfixes/pending/ntdll-reserve-top-down-space-for-large-address-aware-wow64.patch"
 
+    # The NVIDIA driver maps 4G + 2M at the first free address from 0x200000000 for the Vulkan extensions DLSS needs;
+    # bottom-up allocation (ntdll-ForceBottomUpAlloc) can fill that range (DLSS in Star Citizen, #460).
+    echo "WINE: -HOTFIX- Keep the address range the NVIDIA driver reserves for DLSS free"
+    apply_patch "../patches/wine-hotfixes/pending/ntdll-keep-nvidia-dlss-address-range-free.patch"
+
     echo "WINE: -HOTFIX- Remove redundant packed-code split locks"
     apply_patch "../patches/wine-hotfixes/pending/ntdll-remove-redundant-packed-split-lock.patch"
 
@@ -547,9 +562,6 @@ apply_all_in_dir() {
     echo "WINE: --CUSTOM-- add WINE_HOSTBLOCK envvar to allow working around some problematic anticheats (notably eac)"
     apply_patch "../patches/proton/wine_host_block_envvar.patch"
 
-    echo "WINE: mutter -> cinnamon detection patch for winex11"
-    apply_patch "../patches/proton/winex11-mutter-cinnamon.patch"
-
     echo "WINE: add optiscaler patch"
     apply_patch "../patches/proton/0001-HACK-kernelbase-allow-overriding-dlls-for-DLSS-XeSS-.patch"
     apply_patch "../patches/proton/0002-HACK-ntdll-add-optiscaler-inection-hack.patch"
@@ -557,6 +569,10 @@ apply_all_in_dir() {
     # https://github.com/GloriousEggroll/proton-ge-custom/pull/759
     echo "WINE: -PERF- read QueryPerformanceCounter from the TSC in user mode (DCS World: 39 -> 62 FPS)"
     apply_patch "../patches/proton/0001-ntdll-Read-QueryPerformanceCounter-from-the-TSC-in-us.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/873
+    echo "WINE: only check the kernel clocksource for QPC at start-up (P5R Reloaded-II mods crash)"
+    apply_patch "../patches/proton/0002-ntdll-Only-read-the-kernel-clocksource-for-QPC-at-start-up.patch"
 
     echo "WINE: implement IOCTL_SERIAL_GET_DTRRTS (Qt serial device tools, e.g. MOZA Cockpit)"
     apply_patch "../patches/proton/0001-ntdll-Implement-IOCTL_SERIAL_GET_DTRRTS-for-serial-dev.patch"
@@ -579,6 +595,34 @@ apply_all_in_dir() {
 
     echo "WINE: -HOTFIX- ntdll: skip needless wake in RtlReleaseSRWLockShared (ValveSoftware/wine#367)"
     apply_patch "../patches/wine-hotfixes/pending/ntdll-srwlock-skip-needless-shared-release-wake.patch"
+
+    # https://github.com/ValveSoftware/Proton/issues/8072
+    echo "WINE: -GAME FIXES- ntdll: don't leave a stale alert after a raced RtlWaitOnAddress() timeout (Space Marine 2 mid-mission crash)"
+    apply_patch "../patches/wine-hotfixes/pending/ntdll-take-in-flight-alert-when-wait-on-address-times-out.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/870
+    echo "WINE: -GAME FIXES- ntdll: run NCSOFT PURPLE's VMProtect-packed purple-agent.exe in new WoW64 mode (Initialization Error 1)"
+    apply_patch "../patches/wine-hotfixes/pending/ntdll-run-purple-agent-in-new-wow64-mode.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/870
+    echo "WINE: -GAME FIXES- cmd: make CHOICE /T time out on console input (NCSOFT PURPLE post-update restart hang)"
+    apply_patch "../patches/wine-hotfixes/pending/cmd-make-choice-timeout-work-on-console-input.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/837
+    echo "WINE: -GAME FIXES- win32u: release swapchain images presented to hidden windows instead of blocking the host present (RuneScape Vulkan on winewayland)"
+    apply_patch "../patches/wine-hotfixes/pending/win32u-release-images-presented-to-hidden-windows.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/837
+    echo "WINE: -GAME FIXES- win32u: report B8G8R8A8_UNORM as the first surface format like Windows drivers (RuneScape washed-out colors)"
+    apply_patch "../patches/wine-hotfixes/pending/win32u-report-b8g8r8a8-unorm-surface-format-first.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/852
+    echo "WINE: -GAME FIXES- winewayland: advertise the OpenVR/OpenXR Vulkan device pseudo-extensions like winex11 (DXVK/vkd3d device creation fails on Wayland with an OpenXR runtime installed)"
+    apply_patch "../patches/wine-hotfixes/pending/winewayland-advertise-openvr-openxr-device-extensions.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/881
+    echo "WINE: -HOTFIX- win32u: defer destroying NVIDIA Wayland host Vulkan instances while another is alive (NVIDIA driver clears its global libwayland table, EA app crash on winewayland)"
+    apply_patch "../patches/wine-hotfixes/pending/win32u-defer-nvidia-wayland-host-instance-destroy.patch"
 
     # Bluetooth LE GATT and WinRT BLE (Zwift, Rouvy trainers). winebth.sys stays disabled
     # unless PROTON_ENABLE_WINEBTH=1. https://github.com/GloriousEggroll/proton-ge-custom/issues/814

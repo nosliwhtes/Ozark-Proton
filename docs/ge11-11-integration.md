@@ -1,5 +1,9 @@
 # GE-Proton11-11 integration
 
+This document records the October 25 release integration. The subsequent
+[October 28 update](upstream-sync-2026-10-28.md) includes later, unreleased GE
+changes and a newer merged protonfixes revision.
+
 This source update merges the [official GE-Proton11-11 release](https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/GE-Proton11-11)
 (`c0c2ee35e6d4d3bff4d39c6246ac46636434feb8`) into Ozark master
 `85386425b3997fc6f01982bdb3865b7395276671`. It retains both histories.

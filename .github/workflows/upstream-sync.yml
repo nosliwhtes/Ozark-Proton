@@ -1,7 +1,7 @@
 name: Upstream Sync
 
 # Weekly: merge GloriousEggroll/proton-ge-custom master into a sync branch.
-# Clean merge -> open/refresh a PR for review. Conflict -> job fails (visible in Actions).
+# Clean merge -> open/refresh a PR for that upstream commit. Conflict -> fail visibly.
 # No untrusted event input is interpolated into run: steps.
 
 on:
@@ -41,9 +41,31 @@ jobs:
           behind=$(git rev-list --count HEAD..upstream/master)
           echo "behind=$behind" >> "$GITHUB_OUTPUT"
           if [ "$behind" = "0" ]; then echo "Already up to date."; exit 0; fi
-          git checkout -B upstream-sync
-          git merge --no-edit upstream/master
-          git push --force origin upstream-sync
+          upstream_sha=$(git rev-parse upstream/master)
+          branch="upstream-sync-${upstream_sha:0:12}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+            git checkout -b "$branch" "origin/$branch"
+          else
+            git checkout -b "$branch"
+          fi
+          # Git needs both dependency histories to recognize a reviewed fork merge.
+          # Initialization alone cannot reconcile genuinely divergent custom fixes.
+          git submodule update --init protonfixes
+          git -C protonfixes fetch --no-tags \
+            https://github.com/Open-Wine-Components/umu-protonfixes.git \
+            "$(git rev-parse upstream/master:protonfixes)"
+          if ! git merge --no-edit origin/master; then
+            echo "::error::Sync branch conflicts with master. Resolve the existing review branch without discarding its commits."
+            exit 1
+          fi
+          git submodule update --init protonfixes
+          if ! git merge --no-edit "$upstream_sha"; then
+            echo "::error::Upstream conflicts require manual review. For protonfixes, merge the required upstream revision into the fork, preserve custom fixes and OptiScaler support, publish that commit, then update the gitlink. No branch was pushed."
+            git diff --name-only --diff-filter=U
+            exit 1
+          fi
+          git push origin "HEAD:refs/heads/$branch"
 
       - name: Open or update PR
         if: steps.merge.outputs.behind != '0'
@@ -54,13 +76,14 @@ jobs:
           # gh would resolve the base repo from remotes and target GE's repo.
           GH_REPO: ${{ github.repository }}
           BEHIND: ${{ steps.merge.outputs.behind }}
+          SYNC_BRANCH: ${{ steps.merge.outputs.branch }}
         run: |
-          if gh pr view upstream-sync --json state -q .state 2>/dev/null | grep -q OPEN; then
-            gh pr comment upstream-sync --body "Refreshed: $BEHIND upstream commits merged cleanly."
-          elif ! gh pr create --base master --head upstream-sync \
+          if gh pr view "$SYNC_BRANCH" --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr comment "$SYNC_BRANCH" --body "Refreshed: $BEHIND upstream commits merged cleanly; existing review-branch commits preserved."
+          elif ! gh pr create --base master --head "$SYNC_BRANCH" \
               --title "Sync with upstream GE-Proton ($BEHIND commits)" \
-              --body "Automated weekly merge of GloriousEggroll/proton-ge-custom master. Merged cleanly. Run tools/ozark-smoke.sh on a local build before tagging a release."; then
+              --body "Automated weekly merge of GloriousEggroll/proton-ge-custom master (unreleased changes). Validate the integration and full build before release. Game testing requires separate authorization."; then
             # The usual cause is the repo setting, not this workflow's permissions block.
-            echo "::error::Could not open the sync PR. Turn on 'Allow GitHub Actions to create and approve pull requests' under Settings > Actions > General, or open it by hand: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/master...upstream-sync"
+            echo "::error::Could not open the sync PR. Turn on 'Allow GitHub Actions to create and approve pull requests' under Settings > Actions > General, or open it by hand: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/master...$SYNC_BRANCH"
             exit 1
           fi
