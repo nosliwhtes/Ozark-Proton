@@ -9,7 +9,7 @@
 
 Ozark is GE-Proton with a small set of extra changes, tuned for an NVIDIA RTX 5080 on Linux:
 
-- **GE-Proton11-11 base.** Includes the official release's DXVK `2cb4018` and VKD3D-Proton `0bb64c5`, with Ozark's customizations retained. See [integration notes](docs/ge11-11-integration.md) for component pins and validation limits.
+- **GE-Proton11-11 plus upstream updates through `107d34ec`.** Includes 39 later, unreleased GE commits while retaining the release's DXVK `2cb4018`, VKD3D-Proton `0bb64c5` and Ozark's customizations. This is not a new official GE release. See the [October 28 integration notes](docs/upstream-sync-2026-10-28.md) for scope, preserved OptiScaler support and validation limits.
 - **NVIDIA-friendly defaults.** NVAPI stays on (for DLSS and Reflex). The NVIDIA shader cache limit goes up to 10 GB, and the driver no longer deletes old entries. Games that have already built their shaders stutter less the next time you play.
 - **A few Ozark game fixes.** They live in `gamefixes/`. Right now there is one: Cult of the Lamb loads a `winhttp.dll` from the game folder first, so BepInEx mods work.
 - **Release tooling.** Tagged builds and a weekly check for GE updates.
@@ -38,8 +38,8 @@ Whether an anti-cheat game runs is mostly up to its anti-cheat, not Proton. If o
 ## For maintainers
 
 - **Releasing.** Push an annotated tag named for the build date, `Ozark-Proton-YYYY-MM-DD` (for example `Ozark-Proton-2026-10-05`). If you release twice on the same day, add a suffix such as `Ozark-Proton-2026-10-05-2`. Releases up to 2026-09-28 used the old `Ozark-Proton11-7-N` names. GitHub Actions builds it, creates the release, and attaches the tarball and checksum. The tag's message becomes the release notes, so write it for players.
-- **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync` branch. When the merge is clean, it opens a pull request. When there's a conflict, the run fails, and the failure shows up in Actions. Opening the pull request needs **Allow GitHub Actions to create and approve pull requests** turned on under Settings → Actions → General.
-- **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML, script syntax, fail-fast patch preparation, and smoke-test exclusions using fake Steam commands. These checks do not build Proton or launch games.
+- **Upstream updates.** Every Monday, `.github/workflows/upstream-sync.yml` merges GE-Proton's `master` into an `upstream-sync-<commit>` branch. These may be unreleased changes. It preserves existing review-branch commits and uses normal pushes. Clean merges open a pull request; genuine conflicts fail visibly for manual reconciliation, including custom protonfixes history. See the [recovery procedure](docs/upstream-sync-2026-10-28.md#future-syncs). Opening the pull request needs **Allow GitHub Actions to create and approve pull requests** turned on under Settings → Actions → General.
+- **Pull request checks.** `.github/workflows/validate.yml` checks workflow YAML, script syntax, fail-fast patch preparation, smoke-test exclusions using fake Steam commands, sync behavior using local Git fixtures, and prepared OptiScaler option routing. These checks do not build Proton, download upscaler DLLs or launch games.
 - **Smoke test.** `tools/ozark-smoke.sh [appid...]` starts each game through Steam and lets it run for 90 seconds (set `WAIT` to change that). Then it closes the game, scans the log, and writes a report to `~/ozark-logs/`. It really launches your games, so run it only when you mean to. Anti-cheat games are skipped.
 - **Game fixes.** At build time, `gamefixes/<appid>.py` files are copied over GE's protonfixes. A file with the same app ID replaces GE's.
 

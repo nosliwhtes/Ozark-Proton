@@ -2,7 +2,7 @@ name: Validate
 
 # Quick checks on every pull request. They catch broken workflow files and
 # patch-script mistakes before merge, without doing a full build.
-# Full builds run only when a release tag is pushed (see release.yml).
+# Full builds run through Development or a release tag (see devel.yml/release.yml).
 on:
   pull_request:
   push:
@@ -14,6 +14,10 @@ on:
       - 'configure.sh'
       - 'tools/ozark-smoke.sh'
       - 'tools/tests/test_smoke_skip.py'
+      - 'tools/tests/test_upstream_sync.py'
+      - 'tools/tests/test_optiscaler_preparation.py'
+      - 'patches/protonfixes/**'
+      - 'protonfixes'
 
 permissions:
   contents: read
@@ -53,6 +57,15 @@ jobs:
 
       - name: Offline smoke exclusion regression tests
         run: python3 tools/tests/test_smoke_skip.py
+
+      - name: Offline upstream sync regression tests
+        run: python3 tools/tests/test_upstream_sync.py
+
+      - name: Verify prepared protonfixes behavior
+        run: |
+          git submodule update --init protonfixes
+          python3 protonfixes/gamefixes_smoke_test.py
+          python3 tools/tests/test_optiscaler_preparation.py
 
       - name: Guard — patch step must fail fast
         shell: bash
