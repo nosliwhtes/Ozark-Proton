@@ -1100,6 +1100,39 @@ class CompatData:
                     if tracked_name not in prev_tracked_files:
                         tracked_files.write(tracked_name + "\n")
 
+        self.replace_foreign_builtin_links()
+
+    def replace_foreign_builtin_links(self):
+        # A prefix created by another Proton install keeps symlinks to that install's builtin
+        # libraries wherever our default prefix has no file of the same name (e.g. Valve's
+        # wine-mono Microsoft.NET tree), so the walk above never refreshes them. The libraries
+        # are read-only, so installers that overwrite those files fail (dotnet40/48 aborts with
+        # 1603 after winetricks has already removed mscoree.dll). A prefix created by us has
+        # plain files there from wineboot, so replace the links with writable copies of our
+        # library of the same name, or of the old target if we don't ship one.
+        builtin_arch_dirs = ('i386-unix', 'i386-windows', 'x86_64-unix', 'x86_64-windows',
+                             'aarch64-unix', 'aarch64-windows')
+        own_lib_dir = os.path.realpath(g_proton.lib_dir) + "/"
+        replaced = 0
+        for dir_, _, files in os.walk(self.prefix_dir + "/drive_c/windows"):
+            for file_ in files:
+                path = os.path.join(dir_, file_)
+                if not os.path.islink(path) or not file_is_wine_builtin_dll(path):
+                    continue
+                target = os.path.normpath(os.path.join(dir_, os.readlink(path)))
+                if os.path.realpath(target).startswith(own_lib_dir):
+                    continue
+                arch_dir = os.path.basename(os.path.dirname(target))
+                ours = os.path.normpath(os.path.join(g_proton.lib_dir, "wine", arch_dir, os.path.basename(target)))
+                os.unlink(path)
+                if arch_dir in builtin_arch_dirs and file_exists(ours, follow_symlinks=True):
+                    try_copyfile(ours, path)
+                elif file_exists(target, follow_symlinks=True):
+                    try_copyfile(target, path)
+                replaced += 1
+        if replaced:
+            log("Replaced " + str(replaced) + " builtin library links into another Proton install")
+
     def create_symlink(self, lname, fname):
         if file_exists(lname, follow_symlinks=False):
             if os.path.islink(lname):
@@ -1988,6 +2021,16 @@ class Session:
         if appid == "1850570":
             self.env["PROTON_DEATH_STRANDING_FORCE_ENVIRONMENT_EFFECTS"] = "1"
 
+        # These games read the DualSense audio endpoint name and only start USB
+        # haptics on the Windows-style four-channel endpoint. They never probe its
+        # formats, so the automatic Windows Sony audio mode does not trigger. (#860)
+        if appid in [
+                "2909400",  # Final Fantasy VII Rebirth
+                "2420110",  # Horizon Forbidden West Complete Edition
+                "2561580",  # Horizon Zero Dawn Remastered
+                ]:
+            self.env.setdefault("PROTON_SONY_WINDOWS_DEVICE_NAMES", "1")
+
         if "PROTON_PIPEWIRE_ALSA_PLUGIN" not in self.env:
             if g_proton.host_pe_arch == "aarch64-windows":
                 alsa_arch = "aarch64-linux-gnu"
@@ -2318,6 +2361,7 @@ class Session:
         # Preserve PROTON_USE_HDR precedence when both aliases are set.
         self.check_environment("PROTON_ENABLE_HDR", "hdr")
         self.check_environment("PROTON_USE_HDR", "hdr")
+        self.check_environment("PROTON_FORCE_HDR", "forcehdr")
         self.check_environment("PROTON_NO_NTSYNC", "nontsync")
         self.check_environment("PROTON_USE_WRITECOPY", "writecopy")
 
@@ -2565,7 +2609,12 @@ class Session:
         # Leave DXVK_HDR unset by default: shared DXGI detects HDR for DX11/DX12
         # from Wine Wayland output state or Gamescope XWayland feedback.
         # Retain legacy opt-ins/opt-outs without changing the display driver.
-        if "hdr" in self.compat_config:
+        # forcehdr reports HDR on Wine Wayland outputs the compositor reports
+        # as SDR (KWin at SDR brightness == peak, Hyprland cm_auto_hdr).
+        if "forcehdr" in self.compat_config:
+            self.env["DXVK_HDR"] = "1"
+            self.env["WAYLANDDRV_FORCE_HDR"] = "1"
+        elif "hdr" in self.compat_config:
             self.env["DXVK_HDR"] = "1"
         elif "PROTON_ENABLE_HDR" in self.env or "PROTON_USE_HDR" in self.env:
             self.env["DXVK_HDR"] = "0"
