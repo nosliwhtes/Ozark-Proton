@@ -19,12 +19,6 @@ jobs:
       contents: write
     timeout-minutes: 15
     name: Upload ${{ inputs.name }}
-    strategy:
-      matrix:
-        include:
-          - file: ${{ inputs.name }}.tar.gz
-          - file: ${{ inputs.name }}.sha512sum
-          - file: ${{ inputs.name }}.tar.gz.sha256
 
     runs-on: ubuntu-24.04
 
@@ -36,19 +30,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download ${{ matrix.file }} artifact
+      - name: Download ${{ inputs.name }}.tar.gz artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ matrix.file }}
+          name: ${{ inputs.name }}.tar.gz
 
-      - name: Upload ${{ matrix.file }} to release
+      - name: Download ${{ inputs.name }}.sha512sum artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.name }}.sha512sum
+
+      - name: Download ${{ inputs.name }}.tar.gz.sha256 artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.name }}.tar.gz.sha256
+
+      # Never replace a build that is already on the release, e.g. one uploaded
+      # by hand. The tarball and its checksums go together, checked once in one
+      # job: if any is there, upload none, so the checksums always match the
+      # tarball.
+      - name: Upload ${{ inputs.name }} to release
         shell: bash
-        run: >-
-          gh
-          --repo "${{ github.server_url }}/${{ github.repository }}"
-          release upload
-          ${{ inputs.version }}
-          ${{ matrix.file }}
-          --clobber
+        run: |
+          repo="${{ github.server_url }}/${{ github.repository }}"
+          if gh release view "${{ inputs.version }}" --repo "$repo" --json assets --jq '.assets[].name' \
+              | grep -Fxq -e "${{ inputs.name }}.tar.gz" -e "${{ inputs.name }}.sha512sum" -e "${{ inputs.name }}.tar.gz.sha256"; then
+            echo "::notice::A ${{ inputs.name }} build is already on release ${{ inputs.version }}, not uploading."
+          else
+            gh release upload "${{ inputs.version }}" \
+              "${{ inputs.name }}.tar.gz" "${{ inputs.name }}.sha512sum" "${{ inputs.name }}.tar.gz.sha256" --repo "$repo"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
