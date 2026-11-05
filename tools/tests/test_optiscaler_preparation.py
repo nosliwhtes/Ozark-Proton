@@ -18,12 +18,12 @@ class OptiscalerPreparationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="ozark-optiscaler-") as directory:
             root = Path(directory)
             dependency = root / "protonfixes"
-            dependency.mkdir()
-            shutil.copyfile(ROOT / "protonfixes/upscalers.py", dependency / "upscalers.py")
+            shutil.copytree(ROOT / "protonfixes", dependency, symlinks=True,
+                            ignore=shutil.ignore_patterns(".git"))
             shutil.copytree(ROOT / "patches/protonfixes", root / "patches/protonfixes")
             env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull,
                    "GIT_CONFIG_NOSYSTEM": "1", "LC_ALL": "C"}
-            for args in (("init",), ("add", "upscalers.py"),
+            for args in (("init",), ("add", "."),
                          ("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                           "commit", "-m", "Pinned upscalers source")):
                 subprocess.run(["git", *args], cwd=dependency, env=env,
@@ -59,8 +59,10 @@ class OptiscalerPreparationTests(unittest.TestCase):
             env, "/fake/compat", "/fake/prefix", "0.9.0")
         self.assertEqual(env.get("WINE_OPTISCALER_NAME"), "version.dll")
         self.assertNotIn("WINE_UPSCALER_REPLACE", env)
-        self.assertFalse(any(call.args[0] == "fsr4"
-                             for call in self.scope["setup_upscaler"].call_args_list))
+        # Upstream co-enables the underlying upscalers so OptiScaler can wrap them.
+        self.assertTrue(
+            any(call.args[0] == "fsr4" and call.args[3] == "default"
+                for call in self.scope["setup_upscaler"].call_args_list))
 
     def test_fsr4_version_controls_ffx4_unless_explicit(self):
         for explicit, expected in ((False, "4.1.0"), (True, "4.2.0")):
@@ -87,7 +89,7 @@ class OptiscalerPreparationTests(unittest.TestCase):
         self.setup({"optiscaler"}, env)
         self.assertNotIn("WINE_OPTISCALER_NAME", env)
         self.assertEqual(set(env.get("WINE_UPSCALER_REPLACE", "").split(",")),
-                         {"dlss", "xess", "ffx3"})
+                         {"dlss", "xess", "fsr4", "ffx3"})
 
 
 if __name__ == "__main__":
