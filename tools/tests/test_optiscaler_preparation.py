@@ -66,9 +66,8 @@ class OptiscalerPreparationTests(unittest.TestCase):
         self.assertEqual(env.get("WINE_OPTISCALER_NAME"), "version.dll")
         self.assertNotIn("WINE_UPSCALER_REPLACE", env)
         # Upstream co-enables the underlying upscalers so OptiScaler can wrap them.
-        self.assertTrue(
-            any(call.args[0] == "fsr4" and call.args[3] == "default"
-                for call in self.scope["setup_upscaler"].call_args_list))
+        self.scope["setup_upscaler"].assert_any_call(
+            "fsr4", "/fake/compat", "/fake/prefix", "default")
 
     def test_fsr4_version_controls_ffx4_unless_explicit(self):
         for explicit, expected in ((False, "4.1.0"), (True, "4.2.0")):
