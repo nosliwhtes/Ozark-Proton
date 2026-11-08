@@ -9,7 +9,7 @@
 
 Ozark is GE-Proton with a small set of extra changes, tuned for an NVIDIA RTX 5080 on Linux:
 
-- **GE-Proton11-11 plus upstream updates through `107d34ec`.** Includes 39 later, unreleased GE commits while retaining the release's DXVK `2cb4018`, VKD3D-Proton `0bb64c5` and Ozark's customizations. This is not a new official GE release. See the [October 28 integration notes](docs/upstream-sync-2026-10-28.md) for scope, preserved OptiScaler support and validation limits.
+- **GE-Proton11-12 plus the upstream updates integrated through November 6.** Uses DXVK `f863776`, VKD3D-Proton `8293130` and Ozark's customizations. The withdrawn `run`/`runinprefix` upscaler workaround is removed, following GE's correction; normal `waitforexitandrun` setup remains supported. This is not a new official GE release, and it does not include every later unreleased GE change. See the [November 7 release notes](docs/release-2026-11-07.md) for changes and validation limits.
 - **NVIDIA-friendly defaults.** NVAPI stays on (for DLSS and Reflex). The NVIDIA shader cache limit goes up to 10 GB, and the driver no longer deletes old entries. Games that have already built their shaders stutter less the next time you play.
 - **A few Ozark game fixes.** They live in `gamefixes/`. Right now there is one: Cult of the Lamb loads a `winhttp.dll` from the game folder first, so BepInEx mods work.
 - **Release tooling.** Tagged builds and a weekly check for GE updates.
