@@ -28,15 +28,18 @@ class SessionDefaultsTests(unittest.TestCase):
         # after configuration/defaults, before any prefix or game operations.
         session.body = [node for node in session.body if isinstance(node, ast.FunctionDef)
                         and node.name in {"__init__", "init_session"}]
-        cls.code = compile(ast.Module(body=[session], type_ignores=[]), "proton", "exec")
+        helpers = [node for node in tree.body if isinstance(node, ast.FunctionDef)
+                   and node.name == "nonzero"]
+        cls.code = compile(ast.Module(body=[*helpers, session], type_ignores=[]), "proton", "exec")
 
-    def launch_settings(self, environment, settings):
+    def launch_settings(self, environment, settings, *, soundfont_exists=True):
         scope = {
             "os": os, "platform": platform, "sys": sys, "log": Mock(),
             "default_compat_config": set, "default_cpu_limit": {},
-            "file_exists": lambda *args, **kwargs: True,
+            "file_exists": lambda path, **kwargs: soundfont_exists if str(path).endswith(".sf2") else True,
             "g_proton": SimpleNamespace(xrandr_bin="xrandr", host_pe_arch="x86_64-windows",
-                                       lib_dir="/unused/lib", user_settings_file="unused.py"),
+                                       lib_dir="/unused/lib", user_settings_file="unused.py",
+                                       default_soundfont="/unused/GeneralUser-GS.sf2"),
             "g_compatdata": SimpleNamespace(prefix_dir="/unused/prefix"),
             "utilities": SimpleNamespace(is_driver_loaded=Mock(side_effect=SettingsLoaded)),
         }
@@ -47,6 +50,16 @@ class SessionDefaultsTests(unittest.TestCase):
             with self.assertRaises(SettingsLoaded):
                 session.init_session(False)
         return session.env
+
+    def test_midi_synth_default_and_custom_soundfonts(self):
+        for env, expected in (({}, "/unused/GeneralUser-GS.sf2"),
+                              ({"PROTON_MIDI_SOUNDFONT": "/custom/bank.sf2"}, "/custom/bank.sf2")):
+            with self.subTest(env=env):
+                self.assertEqual(self.launch_settings(env, {})["WINE_MIDI_SOUNDFONT"], expected)
+
+    def test_midi_synth_disabled_or_missing_soundfont(self):
+        self.assertNotIn("WINE_MIDI_SOUNDFONT", self.launch_settings({"PROTON_NO_MIDI_SYNTH": "1"}, {}))
+        self.assertNotIn("WINE_MIDI_SOUNDFONT", self.launch_settings({}, {}, soundfont_exists=False))
 
     def test_target_defaults_for_steam_and_umu(self):
         for appid in APPIDS:

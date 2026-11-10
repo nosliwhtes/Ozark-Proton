@@ -74,7 +74,7 @@ apply_all_in_dir() {
     # Upstream 28a02c2 now ships the OptiScaler downloader/FFX4 control and the
     # Amalur d3dcompiler fix natively; the backport overlays were removed with
     # the merge. Only the custom stream-line upgrade, prefix version debug, and
-    # umu mount-drive-letter patches remain.
+    # umu mount-drive-letter patches remain, plus GE's Le Mans Ultimate override.
     echo "PROTONFIXES: apply Ozark overlay patches"
     apply_all_in_dir "../patches/protonfixes/"
     popd
@@ -101,8 +101,13 @@ apply_all_in_dir() {
     echo "DISCORD: -DISCORD RPC BRIDGE- patch steam/umu helpers"
     apply_all_in_dir "patches/discordrpc/helpers"
 
+    # Ubisoft games stayed "Running" in Steam after quitting: https://github.com/ValveSoftware/Proton/pull/10356
+    echo "STEAM_HELPER: close Ubisoft Connect after the game exits"
+    apply_all_in_dir "patches/steam_helper"
+
     git checkout -- \
         lsteamclient/Makefile.in \
+        lsteamclient/overlay_bridge/src/focus_proxy.c \
         lsteamclient/gen_wrapper.py \
         lsteamclient/steam_input_manual.c \
         lsteamclient/steam_matchmaking_manual.c \
@@ -459,6 +464,9 @@ apply_all_in_dir() {
     echo "WINE: -HOTFIX- Share selected cursor images across processes"
     apply_patch "../patches/wine-hotfixes/pending/win32u-share-selected-cursors-across-processes.patch"
 
+    echo "WINE: -HOTFIX- Share resource cursors when they are created (Rockstar overlay cursor)"
+    apply_patch "../patches/wine-hotfixes/pending/win32u-share-resource-cursors-at-creation.patch"
+
     echo "WINE: -HOTFIX- Limit the extra Vulkan swapchain image workaround to DOOM"
     apply_patch "../patches/wine-hotfixes/pending/win32u-limit-extra-swapchain-image-to-doom.patch"
 
@@ -704,6 +712,32 @@ apply_all_in_dir() {
 
     # https://github.com/GloriousEggroll/proton-ge-custom/issues/937
     apply_patch "../patches/wine-hotfixes/pending/winewayland-use-steam-app-id-as-app-id.patch"
+
+    # https://github.com/ValveSoftware/Proton/issues/9994
+    echo "WINE: -HOTFIX- Use the exe name as WM_CLASS/app ID when SteamAppId is 0 or default (umu)"
+    apply_patch "../patches/wine-hotfixes/pending/winex11-winewayland-use-exe-name-for-non-steam-app-ids.patch"
+
+    # https://github.com/GloriousEggroll/proton-ge-custom/issues/877
+    apply_patch "../patches/wine-hotfixes/pending/win32u-winewayland-add-focus-debug-channel.patch"
+    # AION 2 (#877): deactivate when the host focus loss cannot set the desktop foreground
+    apply_patch "../patches/wine-hotfixes/pending/win32u-deactivate-window-when-host-focus-loss-fails.patch"
+
+    # PROTON_PREFER_SDL / Steam Deck: Sony pads were dropped by both hidraw and SDL
+    apply_patch "../patches/wine-hotfixes/pending/winebus-sdl-keep-sony-pads-when-hidraw-is-disabled.patch"
+    # Bluetooth DualShock 4 presented as a wired one, like the DualSense
+    apply_patch "../patches/wine-hotfixes/pending/winebus-expose-bluetooth-dualshock4-as-usb.patch"
+    apply_patch "../patches/wine-hotfixes/pending/winepulse-bluetooth-dualshock4-audio.patch"
+    apply_patch "../patches/wine-hotfixes/pending/winedmo-disable-d3d11-aware-for-phantom-blade-zero.patch"
+    # FlatOut 2 (#939): XInput deadlocked when first called with the loader lock held
+    apply_patch "../patches/wine-hotfixes/pending/xinput-dont-wait-for-update-thread-under-loader-lock.patch"
+    # Le Mans Ultimate VR loads a .cur cursor through D3DX (#944)
+    apply_patch "../patches/wine-hotfixes/pending/d3dx-cur-ico-loading-for-le-mans-ultimate.patch"
+    apply_patch "../patches/wine-hotfixes/pending/d3dx-cur-ico-bounds-and-cursor-alpha-for-le-mans-ultimate.patch"
+    # Le Mans Ultimate: online key derivation and wheel reconnection (#777, #944)
+    apply_patch "../patches/wine-hotfixes/pending/bcrypt-kdf-secret-append-for-le-mans-ultimate.patch"
+    apply_patch "../patches/wine-hotfixes/pending/dinput-find-hotplugged-devices-for-le-mans-ultimate.patch"
+    # RPG Maker games and others: MIDI music was silent without a user-run synth (#949)
+    apply_patch "../patches/wine-hotfixes/pending/winemidisynth-add-software-synth-for-midi-output.patch"
 
     echo "WINE: RUN AUTOCONF TOOLS/MAKE_REQUESTS"
     autoreconf -f

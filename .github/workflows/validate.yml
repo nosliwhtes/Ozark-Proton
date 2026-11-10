@@ -17,6 +17,18 @@ on:
       - 'tools/tests/test_upstream_sync.py'
       - 'tools/tests/test_optiscaler_preparation.py'
       - 'tools/tests/test_session_defaults.py'
+      - 'tools/tests/test_source_preparation.py'
+      - 'tools/tests/test_ddraw_patch_preparation.py'
+      - 'patches/ge-video-rework/**'
+      - 'wine'
+      - 'patches/lsteamclient/**'
+      - 'patches/steam_helper/**'
+      - 'patches/discordrpc/helpers/**'
+      - 'patches/vrclient/**'
+      - 'lsteamclient/**'
+      - 'steam_helper/**'
+      - 'umu_helper/**'
+      - 'vrclient_x64/**'
       - 'proton'
       - 'patches/protonfixes/**'
       - 'protonfixes'
@@ -62,6 +74,12 @@ jobs:
 
       - name: Offline upstream sync regression tests
         run: python3 tools/tests/test_upstream_sync.py
+
+      - name: DirectDraw patch preparation regression
+        run: python3 tools/tests/test_ddraw_patch_preparation.py
+
+      - name: Helper and client patch preparation regression
+        run: python3 tools/tests/test_source_preparation.py
 
       - name: Launcher settings precedence regression tests
         run: python3 tools/tests/test_session_defaults.py
