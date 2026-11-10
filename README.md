@@ -9,7 +9,7 @@
 
 Ozark is GE-Proton with a small set of extra changes, tuned for an NVIDIA RTX 5080 on Linux:
 
-- **GE-Proton11-12 plus the upstream updates integrated through November 6.** Uses DXVK `f863776`, VKD3D-Proton `8293130` and Ozark's customizations. The withdrawn `run`/`runinprefix` upscaler workaround is removed, following GE's correction; normal `waitforexitandrun` setup remains supported. This is not a new official GE release, and it does not include every later unreleased GE change. See the [November 7 release notes](docs/release-2026-11-07.md) for changes and validation limits.
+- **GE-Proton11-12 plus upstream updates through `cc7c349356ef`.** Uses DXVK `f863776`, VKD3D-Proton `8293130` and Ozark's customizations. The withdrawn `run`/`runinprefix` upscaler workaround remains removed; normal `waitforexitandrun` setup remains supported. These are unreleased GE changes, not a new official GE release. See the [November 10 integration notes](docs/upstream-sync-2026-11-10.md) for changes and validation limits.
 - **NVIDIA-friendly defaults.** NVAPI stays on (for DLSS and Reflex). The NVIDIA shader cache limit goes up to 10 GB, and the driver no longer deletes old entries. Games that have already built their shaders stutter less the next time you play.
 - **A few Ozark game fixes.** They live in `gamefixes/`. Right now there is one: Cult of the Lamb loads a `winhttp.dll` from the game folder first, so BepInEx mods work.
 - **Release tooling.** Tagged builds and a weekly check for GE updates.
@@ -91,6 +91,7 @@ Everything below comes from the GE-Proton README. Unless a section says otherwis
 	- [flibitijibibo (Ethan Lee)](#flibitijibibo-ethan-lee)
 	- [simmons-public (Chris Simmons)](#simmons-public-chris-simmons)
 	- [wine-staging maintainers](#wine-staging-maintainers)
+	- [S. Christian Collins](#s-christian-collins)
 	- [Reporters](#reporters)
 	- [Patrons](#patrons)
 - [Donations](#donations)
@@ -709,6 +710,8 @@ Without HIDRAW access, Wine retains its normal SDL fallback, which does not prov
 |                      | `PROTON_SONY_DUALSENSE_EDGE_AS_DUALSENSE` | Expose a native DualSense Edge as a regular DualSense to games without Edge support. Enabled automatically for Diablo IV; set to `0` to disable. Skipped when a Steam Input virtual controller is present. Physical controller identity and native reports are preserved for audio, haptics, and hotplug handling. |
 |                      | `PROTON_DUALSENSE_BT_AS_USB` | Enabled by default when Steam Input is disabled for the game: a Bluetooth-connected DualSense or DualSense Edge is presented to games as a wired (USB) controller, so games that only support the USB protocol get adaptive triggers, lightbar, player LEDs, rumble, motion and touchpad over Bluetooth. Set to `0` to keep the Bluetooth report layout. |
 |                      | `PROTON_DUALSENSE_BT_HAPTICS` | Enabled by default together with `PROTON_DUALSENSE_BT_AS_USB`: games get the controller's four-channel audio endpoint, with HD haptics (channels 3 and 4) and speaker/headphone audio sent to the Bluetooth controller. Speaker audio requires libopus at runtime. Set to `0` to disable. |
+|                      | `PROTON_DUALSHOCK4_BT_AS_USB` | Enabled by default when Steam Input is disabled for the game: a Bluetooth-connected DualShock 4 is presented to games as a wired (USB) controller with the USB report layout, so games that only handle a wired DualShock 4 get correct input, rumble, lightbar, motion and touchpad over Bluetooth. Set to `0` to keep the Bluetooth report layout. |
+|                      | `PROTON_DUALSHOCK4_BT_AUDIO` | Enabled by default together with `PROTON_DUALSHOCK4_BT_AS_USB`: games get the controller's stereo speaker and headset microphone endpoints. Speaker audio is sent to the Bluetooth controller's speaker, or to a headset plugged into the controller, and the microphone of a plugged-in headset is captured over Bluetooth. Set to `0` to disable. |
 |                      | `PROTON_SONY_DUALSENSE_AS_DUALSHOCK4` | Set to `1` to expose a DualSense or DualSense Edge as a DualShock 4 v2. Use this for older games that support DS4 correctly but have missing or broken DualSense mappings. This preserves the game's DS4 button mappings and icons while translating input, rumble, lightbar, and feature reports. When the Steam Input fallback is active, it also advertises the detected DualSense as a DS4 profile. |
 |                      | `PROTON_SONY_DUALSHOCK4_V2_AS_V1` | Set to `1` to expose a DualShock 4 v2 as a DualShock 4 v1. When combined with `PROTON_SONY_DUALSENSE_AS_DUALSHOCK4=1`, a DualSense or DualSense Edge is exposed directly as DS4 v1. Input, output, feature reports, controller audio, haptics, and hotplug handling continue to use the physical controller internally. |
 |                      | `PROTON_STEAM_INPUT_XBOX_PROMPTS` | Set to `1` to report a Steam Deck or Steam Controller to the game as an Xbox One controller through Steam Input, for games that otherwise show keyboard prompts. Enabled by default for Rune Factory 5. |
@@ -728,6 +731,9 @@ Without HIDRAW access, Wine retains its normal SDL fallback, which does not prov
 |                      | `WAYLANDDRV_PRIMARY_MONITOR`   | Specify primary monitor where the value is something like `eDP-1`. Requires the Wayland driver. |
 |                      | `PROTON_ENABLE_MEDIACONV`      | Enable media converter for winegstreamer. This is not needed for winedmo, since the mediaconverter implementation of the codecs doesn't override the underlying implementation. |
 |                      | `WAYLANDDRV_RAWINPUT`          | A value of 0 disables unaccelerated input and uses accelerated input. Any positive real number (like 0.5) adjusts the sensitivity of rawinput. Requires the Wayland driver. |
+|                      | `PROTON_KEEP_UBISOFT_LAUNCHER` | Don't close Ubisoft Connect after the game exits. By default, GE-Proton closes it once no Ubisoft Connect window is showing, so Steam no longer shows the game as running. It also stays open if Ubisoft Connect itself is what you launched, for example when added to Steam as a non-Steam game. |
+|                      | `PROTON_NO_MIDI_SYNTH`         | Disables the built-in MIDI synth, used for MIDI music when the host has no MIDI device or synth of its own. |
+|                      | `PROTON_MIDI_SOUNDFONT`        | Absolute path to an uncompressed `.sf2` sound font for the built-in MIDI synth. Defaults to the bundled GeneralUser GS. `.sf3` files aren't supported. |
 | `lowlatencylayer`    | `LOW_LATENCY_LAYER`            | Enables [low_latency_layer](https://github.com/Korthos-Software/low_latency_layer). |
 
 ## Credits
@@ -787,6 +793,10 @@ Chris is the creator of the original 'protonfixes' project. The portions of 'pro
 I also of course need to thank the wine-staging maintainers: Alistair Leslie-Hughes, Zebediah Figura and Paul Gofman
 
 They have contributed many patches to staging, far beyond what I have done, as well as kept up with regular rebasing. A lot of times when bug reports come to me, if it has to do with staging I end up testing and relaying information to these guys in order to get issues resolved.
+
+### S. Christian Collins
+
+The built-in MIDI synth uses his [GeneralUser GS](https://www.schristiancollins.com/generaluser.php) sound font. Its license is in `soundfonts/GeneralUser-GS-LICENSE.txt`.
 
 ### Reporters
 
