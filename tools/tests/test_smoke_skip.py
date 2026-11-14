@@ -51,8 +51,9 @@ class SmokeSkipTests(unittest.TestCase):
     def run_skip(self, arguments, expected):
         logdir = self.home / "ozark-logs"
         logdir.mkdir(exist_ok=True)
-        retained = logdir / "steam-1938090.log"
-        retained.write_text("retained diagnostic evidence\n")
+        retained_logs = [logdir / f"steam-{appid}.log" for appid in expected]
+        for retained in retained_logs:
+            retained.write_text("retained diagnostic evidence\n")
         result = subprocess.run(
             ["bash", str(SCRIPT), *arguments], env=self.env,
             capture_output=True, text=True, timeout=10,
@@ -65,7 +66,8 @@ class SmokeSkipTests(unittest.TestCase):
             self.assertIn(f"| {appid} |", report)
         self.assertEqual(report.count("| SKIP |"), len(expected))
         self.assertIn(f"0 pass · 0 fail · {len(expected)} skipped", report)
-        self.assertEqual(retained.read_text(), "retained diagnostic evidence\n")
+        for retained in retained_logs:
+            self.assertEqual(retained.read_text(), "retained diagnostic evidence\n")
         self.assertFalse(self.events.exists(), "Skipped titles must not launch or be signalled")
         return report
 
@@ -79,6 +81,16 @@ class SmokeSkipTests(unittest.TestCase):
         self.manifest(library / "steamapps", "1938090")
         (self.apps / "libraryfolders.vdf").write_text(f'"1" {{ "path" "{library}" }}\n')
         self.run_skip([], ["1938090"])
+
+    def test_explicit_bodycam_id_is_skipped(self):
+        self.manifest(self.apps, "2406770")
+        self.run_skip(["2406770"], ["2406770"])
+
+    def test_discovered_bodycam_in_secondary_library_is_skipped(self):
+        library = self.home / "Library with spaces"
+        self.manifest(library / "steamapps", "2406770")
+        (self.apps / "libraryfolders.vdf").write_text(f'"1" {{ "path" "{library}" }}\n')
+        self.run_skip([], ["2406770"])
 
     def test_existing_exclusions_and_log_flag_are_preserved(self):
         flag = self.home / ".config/ozark/test-mode"
