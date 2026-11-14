@@ -60,7 +60,20 @@ jobs:
       - name: Patch
         run: |
           set -o pipefail
-          git submodule update --init --filter=tree:0 --recursive
+          # Submodule hosts (git.kernel.org, gitlab.winehq.org) drop connections
+          # from hosted runners now and then; retry so a flaky host cannot fail
+          # a release build.
+          init_submodules() {
+            for attempt in 1 2 3; do
+              if git submodule update --init --filter=tree:0 --recursive; then
+                return 0
+              fi
+              echo "::warning::submodule update failed (attempt $attempt of 3)"
+              sleep 20
+            done
+            return 1
+          }
+          init_submodules
           # apply proton-ge-custom patches (fail fast — a broken tree must not go green)
           ./patches/protonprep-valve-staging.sh 2>&1 | tee patchlog.txt
           # strip binaries at compile time to save space in the runner
