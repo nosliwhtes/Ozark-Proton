@@ -8,7 +8,8 @@ build can fix that: not Ozark, not GE, not Valve's.
 
 The first three entries use [AreWeAntiCheatYet](https://areweanticheatyet.com), checked
 2026-09-26. The HQ entry uses Valve and Activision evidence checked 2026-10-25, below.
-These are external support reports, not Ozark gameplay results.
+Bodycam’s anti-cheat was announced in its November 13, 2026 update. The table does
+not establish Ozark gameplay compatibility.
 
 | AppID | Game | Anti-cheat | Reported support | In smoke test |
 |---|---|---|---|---|
@@ -16,6 +17,7 @@ These are external support reports, not Ozark gameplay results.
 | 2479810 | Gray Zone Warfare | Easy Anti-Cheat + AnyBrain | Running | Skipped |
 | 1144200 | Ready or Not | (not listed) | — | Skipped |
 | 1938090 | Call of Duty HQ (including Modern Warfare 4) | RICOCHET | Unsupported anti-cheat (Valve) | Skipped |
+| 2406770 | Bodycam | Easy Anti-Cheat | Not verified after v0.9 | Skipped |
 
 The smoke test skips these titles even when their app IDs are supplied explicitly. Repeated
 unattended launch/stop cycles cannot establish anti-cheat compatibility. A skipped entry is
@@ -47,6 +49,27 @@ prevents automated retries; it does not change normal Steam launches. Do not tre
 1114 as proof of a missing ordinary DLL or add speculative service/driver overrides.
 GE11-11's Call of Duty (2003) fix and GE11-10's Ghosts fix concern different games and do
 not establish HQ/MW4 support.
+
+## Bodycam v0.9
+
+The [v0.9 update](https://steamcommunity.com/app/2406770/homecontent) added
+Easy Anti-Cheat for multiplayer and changed rendering. An anti-cheat
+initialization success does not establish that the menu loads or that
+multiplayer works.
+
+For a startup hang, do a manual baseline comparison through Steam:
+
+1. Record Bodycam's current compatibility tool and launch options. For Bodycam
+   only, remove optional graphics overrides and keep only `PROTON_LOG=1 %command%`
+   if collecting a log. Try Ozark first so only the options change.
+2. If the hang persists, select Valve's **Proton Experimental** under
+   **Bodycam → Properties → Compatibility** and try the same clean launch.
+   Record whether the game reaches its menu. Save the log from the first run
+   separately if comparing logs, because Proton uses the same filename.
+3. Restore the original per-game settings if needed. These tests do not
+   require changing other games' settings, deleting the prefix, or editing
+   anti-cheat files. If both builds hang, the comparison has not isolated an
+   Ozark-specific cause. Report menu startup separately from multiplayer.
 
 ## If an anti-cheat game stops launching
 

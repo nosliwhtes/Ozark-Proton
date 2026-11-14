@@ -2,7 +2,7 @@
 # Ozark smoke test: launch each game through Steam, let it run, close it, scan the Proton log.
 #
 #   tools/ozark-smoke.sh                 # every installed Proton game except anti-cheat skips
-#   tools/ozark-smoke.sh 1313140 2406770 # just these appids
+#   tools/ozark-smoke.sh 1313140        # just this appid
 #   WAIT=120 tools/ozark-smoke.sh        # seconds to let each game run (default 90)
 #
 # Steam must be running. Each game uses whatever Proton Steam has mapped for it;
@@ -20,7 +20,7 @@ BOOT_TIMEOUT="${BOOT_TIMEOUT:-120}"
 # repeated start/kill can flag the account. See ANTICHEAT.md.
 # Call of Duty HQ (including MW4) requires RICOCHET's Windows kernel driver.
 # Keep explicit app-ID requests on the same exclusion path as library discovery.
-SKIP=(553850 2479810 1144200 1938090)
+SKIP=(553850 2479810 1144200 1938090 2406770)
 # Steam runtimes / Proton builds / redistributables are not games.
 NOT_GAMES=(228980 1070560 1391110 1628350 4183110 1493710 2180100 4628710)
 
