@@ -70,3 +70,15 @@ Validation of this source branch is separate from a complete Development build,
 release packaging and gameplay verification. Do not treat passing lightweight
 checks as proof of any game's compatibility or install this integration over a
 known working release without the separate build and artifact checks.
+
+## Submodule host resilience
+
+The [November 13 release build](https://github.com/nosliwhtes/Ozark-Proton/actions/runs/43544384199)
+failed after two `git.kernel.org` connections timed out at 132 seconds each, so
+the new `sbc` submodule never cloned. The same patch tree had already built
+successfully in a Development run, which makes this a host problem rather than a
+source problem. The `sbc` submodule now points at `kernel.googlesource.com`, an
+official mirror that carries the pinned commit `b3deb8a5`, and the Patch step
+retries the recursive submodule update three times before failing. Run
+`git submodule sync` in an existing checkout that already initialized `sbc` from
+kernel.org.

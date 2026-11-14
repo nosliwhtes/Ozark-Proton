@@ -138,4 +138,6 @@
 	url = https://github.com/GameTechDev/dxvk-igdext
 [submodule "sbc"]
 	path = sbc
-	url = https://git.kernel.org/pub/scm/bluetooth/sbc.git
+	# kernel.googlesource.com mirrors git.kernel.org and stayed reachable from
+	# GitHub runners when git.kernel.org timed out (release run 43544384199).
+	url = https://kernel.googlesource.com/pub/scm/bluetooth/sbc
