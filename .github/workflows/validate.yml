@@ -87,6 +87,7 @@ jobs:
       - name: Verify prepared protonfixes behavior
         run: |
           git submodule update --init protonfixes
+          git -C protonfixes submodule update --init --depth 1 subprojects/umu-database subprojects/winetricks
           python3 protonfixes/gamefixes_smoke_test.py
           python3 tools/tests/test_optiscaler_preparation.py
           HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) XDG_CACHE_HOME=$(mktemp -d) python3 -m protonfixes.protonfixes_test
