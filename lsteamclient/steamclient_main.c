@@ -538,12 +538,12 @@ void execute_pending_callbacks(void)
         }
 
         case CALL_IFACE_VTABLE_1_SEND_REJECTION_SIGNAL:
-            TRACE( "CALL_IFACE_VTABLE_1_SEND_REJECTION_SIGNAL, win_class %#I64x.\n", params.callback->connection_send_signal.win_class );
+            TRACE( "CALL_IFACE_VTABLE_1_SEND_REJECTION_SIGNAL, win_class %#I64x.\n", params.callback->send_rejection_signal.win_class );
             CALL_VTBL_FUNC( (ULONG_PTR)params.callback->send_rejection_signal.win_class, 4,
                     void, (void *, const SteamNetworkingIdentity *, const void *, uint32_t),
                     ((void *)(ULONG_PTR)params.callback->send_rejection_signal.win_class,
                     &params.callback->send_rejection_signal.identityPeer,
-                    params.callback->send_rejection_signal.msg, params.callback->connection_send_signal.cbMsg) );
+                    params.callback->send_rejection_signal.msg, params.callback->send_rejection_signal.cbMsg) );
             break;
         }
     }

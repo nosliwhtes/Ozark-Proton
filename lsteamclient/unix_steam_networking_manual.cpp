@@ -41,7 +41,8 @@ class wrap_ISteamNetworkingConnectionSignaling : public u_ISteamNetworkingConnec
             FIXME( "NULL win_class.\n" );
             if (cb->type == CALL_IFACE_VTABLE_1_CONNECTION_RELEASE)
                 delete c;
-            return true;
+            /* No Windows callback or result handler should run for a rejected interface. */
+            return false;
         }
         if (c->win_class == uninitialized_value)
         {
