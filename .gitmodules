@@ -141,3 +141,6 @@
 	# kernel.googlesource.com mirrors git.kernel.org and stayed reachable from
 	# GitHub runners when git.kernel.org timed out (release run 43544384199).
 	url = https://kernel.googlesource.com/pub/scm/bluetooth/sbc
+[submodule "piper-phonemize"]
+	path = piper-phonemize
+	url = https://github.com/shaunren/piper-phonemize
