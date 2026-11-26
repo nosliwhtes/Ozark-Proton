@@ -1,10 +1,6 @@
-"""Check the actual protonfixes prep block and option routing without downloads."""
+"""Check the pinned protonfixes option routing without downloads."""
 import ast
-import os
 from pathlib import Path
-import shutil
-import subprocess
-import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
@@ -16,43 +12,24 @@ ROOT = Path(__file__).resolve().parents[2]
 class OptiscalerPreparationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with tempfile.TemporaryDirectory(prefix="ozark-optiscaler-") as directory:
-            root = Path(directory)
-            dependency = root / "protonfixes"
-            shutil.copytree(ROOT / "protonfixes", dependency, symlinks=True,
-                            ignore=shutil.ignore_patterns(".git"))
-            shutil.copytree(ROOT / "patches/protonfixes", root / "patches/protonfixes")
-            env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull,
-                   "GIT_CONFIG_NOSYSTEM": "1", "LC_ALL": "C"}
-            for args in (("init",), ("add", "."),
-                         ("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
-                          "commit", "-m", "Pinned upscalers source")):
-                subprocess.run(["git", *args], cwd=dependency, env=env,
-                               check=True, capture_output=True)
-            prep = (ROOT / "patches/protonprep-valve-staging.sh").read_text()
-            helpers = prep.split("### (1) PREP SECTION ###", 1)[0]
-            block = prep.split("    pushd protonfixes\n", 1)[1].split("    popd", 1)[0]
-            result = subprocess.run(
-                ["bash", "-c", helpers + "\npushd protonfixes\n" + block + "\npopd\n"],
-                cwd=root, env=env, capture_output=True, text=True, timeout=15,
-            )
-            if result.returncode:
-                raise AssertionError(result.stdout + result.stderr)
-            tree = ast.parse((dependency / "upscalers.py").read_text())
-            # Execute unchanged production routing functions with mocked I/O helpers.
-            cls.routing = compile(ast.Module(body=[
-                node for node in tree.body if isinstance(node, ast.FunctionDef)
-                and node.name in {"get_version", "setup_upscalers"}
-            ], type_ignores=[]), "prepared-upscalers.py", "exec")
-            launcher = ast.parse((dependency / "__init__.py").read_text())
-            cls.launcher = compile(ast.Module(body=[
-                node for node in launcher.body if isinstance(node, ast.FunctionDef)
-                and node.name in {"check_conditions", "check_iscriptevaluator", "setup_upscalers"}
-            ], type_ignores=[]), "prepared-protonfixes.py", "exec")
+        # The four former overlay changes now ship in the pinned dependency.
+        dependency = ROOT / "protonfixes"
+        tree = ast.parse((dependency / "upscalers.py").read_text())
+        # Execute unchanged production routing functions with mocked I/O helpers.
+        cls.routing = compile(ast.Module(body=[
+            node for node in tree.body if isinstance(node, ast.FunctionDef)
+            and node.name in {"get_version", "setup_upscalers"}
+        ], type_ignores=[]), "prepared-upscalers.py", "exec")
+        launcher = ast.parse((dependency / "__init__.py").read_text())
+        cls.launcher = compile(ast.Module(body=[
+            node for node in launcher.body if isinstance(node, ast.FunctionDef)
+            and node.name in {"check_conditions", "check_iscriptevaluator", "setup_upscalers"}
+        ], type_ignores=[]), "prepared-protonfixes.py", "exec")
 
     def setUp(self):
         self.scope = {name: Mock(return_value=True) for name in
-                      ("setup_upscaler", "setup_optiscaler", "clean_tracked_files", "log")}
+                      ("setup_upscaler", "setup_optiscaler", "clean_tracked_files", "log", "download_component")}
+        self.scope["check_component"] = Mock(return_value=False)
         exec(self.routing, self.scope)
 
     def setup(self, options, env):
@@ -112,6 +89,14 @@ class OptiscalerPreparationTests(unittest.TestCase):
                         options, env, "/fake/compat", "/fake/prefix")
                 else:
                     upscalers.setup_upscalers.assert_not_called()
+
+    def test_streamline_uses_requested_version(self):
+        self.scope["check_component"].return_value = True
+        env = {"PROTON_STREAMLINE_UPGRADE": "2.9.0"}
+        self.setup({"dlss", "streamline"}, env)
+        self.scope["download_component"].assert_called_once_with(
+            "streamline", "/fake/compat", "/fake/prefix", "2.9.0")
+        self.assertIn("streamline", env["WINE_UPSCALER_REPLACE"].split(","))
 
     def test_failed_optiscaler_keeps_successful_upscaler_fallback(self):
         self.scope["setup_optiscaler"].return_value = False
